@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Newton | Designer & Developer | Portfolio</title>
+  <meta name="description" content="Newton, a Kenyan-born designer and full-stack developer specializing in creating innovative digital experiences with a focus on African tech solutions.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+  
+  <style id="app-style">
+    :root {
+      --primary: #00D1FF; /* Cyan/Aqua */
+      --secondary: #FF4D8D; /* Pink/Magenta */
+      --accent: #FFD600;
+      --dark: #121212;
+      --light: #F5F5F7;
+      --light-contrast: #E0E0E0; /* For form backgrounds in light mode */
+      --dark-contrast: #1E1E1E; /* For form backgrounds in dark mode */
+      --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      transition: var(--transition);
+      overflow-x: hidden;
+      background-color: var(--dark);
+      color: var(--light);
+      scroll-behavior: smooth;
+      line-height: 1.6; /* Improved readability */
+    }
+    
+    body.light-mode {
+      background-color: var(--light);
+      color: var(--dark);
+    }
+    
+    h1, h2, h3, h4, h5 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    
+    .highlight {
+      color: var(--primary);
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      font-family: 'Space Grotesk', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      transition: var(--transition);
+      z-index: -1;
+    }
+    
+    .btn:hover::before {
+      width: 100%;
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: var(--dark);
+    }
+    
+    .btn-outline {
+      border: 2px solid var(--primary);
+      color: var(--primary);
+    }
+    
+    .hero-gradient {
+      background: linear-gradient(135deg, rgba(0, 209, 255, 0.15), rgba(255, 77, 141, 0.15));
+      backdrop-filter: blur(10px);
+    }
+    
+    .card {
+      border-radius: 16px;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+    
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+    }
+    
+    .skill-item {
+      padding: 10px 18px; /* Slightly refined padding */
+      border-radius: 40px;
+      display: inline-block;
+      margin: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .skill-item:hover {
+      transform: scale(1.05);
+    }
+    
+    .cursor {
+      width: 30px;
+      height: 30px;
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+      transition: 0.1s;
+      transition-timing-function: ease-out;
+    }
+    
+    .nav-link {
+      position: relative;
+    }
+    
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: var(--primary);
+      transition: var(--transition);
+    }
+    
+    .nav-link:hover::after {
+      width: 100%;
+    }
+    
+    .logo {
+      position: relative;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--dark);
+      font-weight: 700;
+      font-size: 24px;
+    }
+    
+    .timeline {
+      position: relative;
+      padding-left: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background: var(--primary);
+      opacity: 0.3;
+    }
+    
+    .timeline-item {
+      position: relative;
+      padding-left: 30px;
+      padding-bottom: 40px;
+    }
+    
+    .timeline-item::before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 8px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--dark);
+      border: 3px solid var(--primary);
+      z-index: 1;
+    }
+
+    .timeline-item:last-child {
+      padding-bottom: 0;
+    }
+    
+    .pattern-bg {
+      background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="%23121212"/><path d="M0 15L20 0L40 15L60 0L80 15L100 0V20L80 35L100 50L80 65L100 80V100L80 85L60 100L40 85L20 100L0 85V65L20 50L0 35V15Z" fill="%2300D1FF" opacity="0.05"/></svg>');
+    }
+    
+    .light-mode .pattern-bg {
+      background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="%23F5F5F7"/><path d="M0 15L20 0L40 15L60 0L80 15L100 0V20L80 35L100 50L80 65L100 80V100L80 85L60 100L40 85L20 100L0 85V65L20 50L0 35V15Z" fill="%2300D1FF" opacity="0.1"/></svg>');
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+    
+    .sound-toggle {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .sound-toggle:hover {
+      transform: scale(1.1);
+    }
+    
+    .african-pattern {
+      position: absolute;
+      opacity: 0.05;
+      z-index: -1;
+      width: 100%;
+      height: 100%;
+      background-size: 30px 30px;
+      background-image: repeating-linear-gradient(45deg, var(--primary) 0, var(--primary) 1px, transparent 0, transparent 50%);
+    }
+    
+    .theme-toggle {
+      position: relative;
+      width: 60px;
+      height: 30px;
+      border-radius: 15px;
+      background-color: var(--dark-contrast); /* Darker background for dark mode */
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      padding: 0 5px;
+    }
+    
+    .theme-toggle.light {
+      background-color: var(--light-contrast); /* Lighter background for light mode */
+    }
+    
+    .toggle-circle {
+      position: absolute;
+      left: 5px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--dark); /* Icon color always contrasts with circle */
+    }
+    
+    .theme-toggle.light .toggle-circle {
+      left: 35px;
+    }
+    
+    .scroll-indicator {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0) translateX(-50%);
+      }
+      40% {
+        transform: translateY(-20px) translateX(-50%);
+      }
+      60% {
+        transform: translateY(-10px) translateX(-50%);
+      }
+    }
+    
+    .project-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+    }
+    
+    .project-overlay {
+      position: absolute;
+      bottom: -100%;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+      transition: var(--transition);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    
+    .project-card:hover .project-overlay {
+      bottom: 0;
+    }
+
+    /* Contact Form Specific Styles */
+    .contact-form-bg {
+      background-color: var(--dark-contrast);
+      position: relative;
+      overflow: hidden;
+    }
+    .light-mode .contact-form-bg {
+      background-color: var(--light-contrast);
+    }
+
+    .contact-form-bg::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      left: -50px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+      opacity: 0.08;
+      filter: blur(30px);
+      z-index: 0;
+    }
+    .contact-form-bg::after {
+      content: '';
+      position: absolute;
+      bottom: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
+      opacity: 0.08;
+      filter: blur(30px);
+      z-index: 0;
+    }
+
+    .contact-input {
+      background-color: var(--dark); /* Input background in dark mode */
+      color: var(--light);
+      border: 1px solid rgba(0, 209, 255, 0.2); /* Subtle primary border */
+      transition: var(--transition);
+    }
+    .contact-input:focus {
+      border-color: var(--primary); /* Highlight primary on focus */
+      box-shadow: 0 0 0 2px rgba(0, 209, 255, 0.3);
+      background-color: var(--dark-contrast); /* Slightly lighter on focus */
+    }
+    .light-mode .contact-input {
+      background-color: white; /* Input background in light mode */
+      color: var(--dark);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    .light-mode .contact-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(0, 209, 255, 0.3);
+      background-color: var(--light); /* Slightly darker on focus */
+    }
+
+    /* Footer adjustments */
+    footer {
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body class="pattern-bg">
+  <div class="cursor hidden lg:block"></div>
+  
+  <nav class="fixed top-0 left-0 w-full z-50 py-6 px-4 md:px-8 backdrop-blur-lg bg-opacity-80 bg-dark-900">
+    <div class="container mx-auto flex justify-between items-center">
+      <a href="#home" class="logo font-space">N.</a>
+      <div class="hidden md:flex items-center space-x-8">
+        <a href="#home" class="nav-link text-white hover:text-primary">Home</a>
+        <a href="#about" class="nav-link text-white hover:text-primary">About</a>
+        <a href="#skills" class="nav-link text-white hover:text-primary">Skills</a>
+        <a href="#projects" class="nav-link text-white hover:text-primary">Projects</a>
+        <a href="#experience" class="nav-link text-white hover:text-primary">Experience</a>
+        <a href="#contact" class="nav-link text-white hover:text-primary">Contact</a>
+      </div>
+      <div class="flex items-center space-x-4">
+        <div class="theme-toggle" id="themeToggle">
+          <div class="toggle-circle">
+            <i class="fas fa-moon text-dark text-xs"></i>
+          </div>
+        </div>
+        <div class="md:hidden">
+          <button id="mobileMenuBtn" class="text-white focus:outline-none p-2 rounded-md hover:bg-white hover:bg-opacity-10" aria-label="Open mobile menu">
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="mobileMenu" class="fixed inset-0 bg-black bg-opacity-95 z-50 flex-col items-center justify-center hidden">
+      <button id="closeMenuBtn" class="absolute top-6 right-6 text-white p-2 rounded-md hover:bg-white hover:bg-opacity-10" aria-label="Close mobile menu">
+        <i class="fas fa-times text-2xl"></i>
+      </button>
+      <div class="flex flex-col items-center space-y-8 text-xl">
+        <a href="#home" class="text-white hover:text-primary">Home</a>
+        <a href="#about" class="text-white hover:text-primary">About</a>
+        <a href="#skills" class="text-white hover:text-primary">Skills</a>
+        <a href="#projects" class="text-white hover:text-primary">Projects</a>
+        <a href="#experience" class="text-white hover:text-primary">Experience</a>
+        <a href="#contact" class="text-white hover:text-primary">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <section id="home" class="min-h-screen flex items-center relative overflow-hidden pt-20">
+    <div class="african-pattern"></div>
+    <div class="container mx-auto px-4 md:px-8 flex flex-col lg:flex-row items-center">
+      <div class="lg:w-1/2 z-10" data-aos="fade-right" data-aos-duration="1000">
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
+          Designing the <span class="highlight">Future</span>, <br>
+          One Line of <span class="highlight">Code</span> at a Time
+        </h1>
+        <p class="text-lg md:text-xl opacity-80 mb-8 max-w-lg">
+          Kenyan-born designer and developer crafting digital experiences that bridge *innovation with cultural identity*.
+        </p>
+        <div class="flex flex-wrap gap-4">
+          <a href="#projects" class="btn btn-primary">View Projects</a>
+          <a href="#contact" class="btn btn-outline">Let's Talk</a>
+        </div>
+        <div class="mt-12 flex items-center space-x-6">
+          <a href="https://github.com/newton" target="_blank" class="text-white hover:text-primary transition-colors" aria-label="Github Profile">
+            <i class="fab fa-github text-2xl"></i>
+          </a>
+          <a href="https://linkedin.com/in/newton" target="_blank" class="text-white hover:text-primary transition-colors" aria-label="LinkedIn Profile">
+            <i class="fab fa-linkedin text-2xl"></i>
+          </a>
+          <a href="https://behance.net/newton" target="_blank" class="text-white hover:text-primary transition-colors" aria-label="Behance Profile">
+            <i class="fab fa-behance text-2xl"></i>
+          </a>
+          <a href="https://twitter.com/newton" target="_blank" class="text-white hover:text-primary transition-colors" aria-label="Twitter Profile">
+            <i class="fab fa-twitter text-2xl"></i>
+          </a>
+        </div>
+      </div>
+      <div class="lg:w-1/2 mt-12 lg:mt-0" data-aos="fade-left" data-aos-duration="1000" data-aos-delay="300">
+        <div class="hero-gradient p-4 rounded-3xl">
+          <img src="https://cdn.pixabay.com/photo/2023/07/11/13/29/ai-generated-8119892_1280.jpg" alt="A professional abstract portrait representing Newton, a developer & designer." class="rounded-2xl w-full h-auto shadow-2xl">
+        </div>
+      </div>
+    </div>
+    <div class="scroll-indicator">
+      <i class="fas fa-chevron-down text-white text-2xl opacity-70"></i>
+    </div>
+  </section>
+
+  <section id="about" class="py-20 md:py-32 relative">
+    <div class="container mx-auto px-4 md:px-8">
+      <div class="flex flex-col md:flex-row items-center gap-12">
+        <div class="md:w-1/2" data-aos="fade-right">
+          <img src="https://cdn.pixabay.com/photo/2018/03/10/09/49/businessman-3213659_1280.jpg" alt="Newton working at a desk, demonstrating focus and professionalism." class="rounded-2xl shadow-xl w-full">
+        </div>
+        <div class="md:w-1/2" data-aos="fade-left">
+          <h2 class="text-3xl md:text-4xl font-bold mb-6">About <span class="highlight">Me</span></h2>
+          <p class="text-lg opacity-90 mb-6">
+            I'm a Kenyan-born computer science and design professional with a passion for creating digital experiences that blend innovation with *cultural authenticity*. My journey started in the vibrant tech scene of Nairobi and has evolved into a global perspective on design and development.
+          </p>
+          <p class="text-lg opacity-90 mb-6">
+            I thrive at the intersection of code and creativity, bringing a unique African perspective to the global design community while maintaining world-class standards. My work draws inspiration from traditional African aesthetics, such as *geometric patterns and vibrant color theory*, combined with cutting-edge technology.
+          </p>
+          <p class="text-lg opacity-90 mb-8">
+            When I'm not coding or designing, I'm exploring emerging technologies, mentoring other young African talents, and working on projects that can make a positive impact in my community and beyond.
+          </p>
+          <a href="/Newton_CV_2024.pdf" class="btn btn-outline" download>Download CV <i class="fas fa-download ml-2"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills" class="py-20 md:py-32 bg-black bg-opacity-30">
+    <div class="container mx-auto px-4 md:px-8">
+      <h2 class="text-3xl md:text-4xl font-bold mb-4 text-center" data-aos="fade-up">Skills & <span class="highlight">Tools</span></h2>
+      <p class="text-center text-lg opacity-80 mb-16 max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="100">
+        My technology toolkit is constantly evolving. Here's what I'm currently working with to bring ideas to life.
+      </p>
+      
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8" data-aos="fade-up" data-aos-delay="200">
+        <div class="bg-white bg-opacity-5 p-6 rounded-xl hover:bg-opacity-10 transition-all card">
+          <div class="text-primary text-3xl mb-4">
+            <i class="fas fa-code"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-4">Frontend Engineering</h3>
+          <div>
+            <span class="skill-item bg-blue-500 bg-opacity-20 text-blue-400">React</span>
+            <span class="skill-item bg-purple-500 bg-opacity-20 text-purple-400">Next.js</span>
+            <span class="skill-item bg-cyan-500 bg-opacity-20 text-cyan-400">Tailwind</span>
+            <span class="skill-item bg-yellow-500 bg-opacity-20 text-yellow-400">JavaScript</span>
+            <span class="skill-item bg-indigo-500 bg-opacity-20 text-indigo-400">TypeScript</span>
+          </div>
+        </div>
+        
+        <div class="bg-white bg-opacity-5 p-6 rounded-xl hover:bg-opacity-10 transition-all card">
+          <div class="text-primary text-3xl mb-4">
+            <i class="fas fa-server"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-4">Backend & Cloud</h3>
+          <div>
+            <span class="skill-item bg-green-500 bg-opacity-20 text-green-400">Node.js</span>
+            <span class="skill-item bg-blue-500 bg-opacity-20 text-blue-400">Python</span>
+            <span class="skill-item bg-red-500 bg-opacity-20 text-red-400">Firebase</span>
+            <span class="skill-item bg-purple-500 bg-opacity-20 text-purple-400">GraphQL</span>
+            <span class="skill-item bg-yellow-500 bg-opacity-20 text-yellow-400">AWS</span>
+          </div>
+        </div>
+        
+        <div class="bg-white bg-opacity-5 p-6 rounded-xl hover:bg-opacity-10 transition-all card">
+          <div class="text-primary text-3xl mb-4">
+            <i class="fas fa-paint-brush"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-4">UX/UI & Motion</h3>
+          <div>
+            <span class="skill-item bg-purple-500 bg-opacity-20 text-purple-400">Figma</span>
+            <span class="skill-item bg-blue-500 bg-opacity-20 text-blue-400">Illustrator</span>
+            <span class="skill-item bg-green-500 bg-opacity-20 text-green-400">GSAP</span>
+            <span class="skill-item bg-pink-500 bg-opacity-20 text-pink-400">After Effects</span>
+          </div>
+        </div>
+        
+        <div class="bg-white bg-opacity-5 p-6 rounded-xl hover:bg-opacity-10 transition-all card">
+          <div class="text-primary text-3xl mb-4">
+            <i class="fas fa-plus-circle"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-4">Emerging Tech</h3>
+          <div>
+            <span class="skill-item bg-green-500 bg-opacity-20 text-green-400">3D Modeling</span>
+            <span class="skill-item bg-yellow-500 bg-opacity-20 text-yellow-400">UX Research</span>
+            <span class="skill-item bg-red-500 bg-opacity-20 text-red-400">AR/VR (Unity)</span>
+            <span class="skill-item bg-blue-500 bg-opacity-20 text-blue-400">Machine Learning</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects" class="py-20 md:py-32">
+    <div class="container mx-auto px-4 md:px-8">
+      <h2 class="text-3xl md:text-4xl font-bold mb-4 text-center" data-aos="fade-up">Featured <span class="highlight">Projects</span></h2>
+      <p class="text-center text-lg opacity-80 mb-16 max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="100">
+        A selection of my most impactful work across web, mobile, and interactive design, often with an African-tech focus.
+      </p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="project-card shadow-xl" data-aos="fade-up" data-aos-delay="200">
+          <img src="https://cdn.pixabay.com/photo/2023/06/02/14/10/ai-generated-8035726_1280.jpg" alt="Web interface design for AfriTech Connect, a talent matching platform." class="w-full h-80 object-cover">
+          <div class="project-overlay">
+            <h3 class="text-2xl font-bold mb-2">AfriTech Connect</h3>
+            <p class="opacity-80 mb-4">A Next.js platform connecting African tech talents with global remote opportunities, featuring AI-powered matching inspired by geometric Maasai patterns.</p>
+            <div class="flex space-x-4">
+              <a href="#demo" class="text-primary hover:text-white transition-colors font-medium">Live Demo <i class="fas fa-external-link-alt ml-1"></i></a>
+              <a href="#case-study-1" class="text-primary hover:text-white transition-colors font-medium">Case Study <i class="fas fa-file-alt ml-1"></i></a>
+            </div>
+          </div>
+        </div>
+        
+        <div class="project-card shadow-xl" data-aos="fade-up" data-aos-delay="300">
+          <img src="https://cdn.pixabay.com/photo/2016/09/03/17/01/drone-1642289_1280.jpg" alt="Mobile application interface for small-scale African farmers." class="w-full h-80 object-cover">
+          <div class="project-overlay">
+            <h3 class="text-2xl font-bold mb-2">Shamba Smart App</h3>
+            <p class="opacity-80 mb-4">A *React Native* mobile solution built for local Kenyan farmers, providing offline-first weather reports and market price tracking. Focus on accessibility and low-data usage.</p>
+            <div class="flex space-x-4">
+              <a href="#demo" class="text-primary hover:text-white transition-colors font-medium">Live Demo <i class="fas fa-external-link-alt ml-1"></i></a>
+              <a href="#case-study-2" class="text-primary hover:text-white transition-colors font-medium">Case Study <i class="fas fa-file-alt ml-1"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-card shadow-xl" data-aos="fade-up" data-aos-delay="400">
+          <img src="https://cdn.pixabay.com/photo/2022/01/21/04/10/code-6954203_1280.jpg" alt="A sophisticated data visualization dashboard showing charts and graphs." class="w-full h-80 object-cover">
+          <div class="project-overlay">
+            <h3 class="text-2xl font-bold mb-2">Nexus Analytics Dashboard</h3>
+            <p class="opacity-80 mb-4">Designed and developed a *Python/Flask* data visualization tool used internally to track startup growth metrics across East Africa. Prioritized clean UX for complex data sets.</p>
+            <div class="flex space-x-4">
+              <a href="#demo" class="text-primary hover:text-white transition-colors font-medium">Live Demo <i class="fas fa-external-link-alt ml-1"></i></a>
+              <a href="#case-study-3" class="text-primary hover:text-white transition-colors font-medium">Case Study <i class="fas fa-file-alt ml-1"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-card shadow-xl" data-aos="fade-up" data-aos-delay="500">
+          <img src="https://cdn.pixabay.com/photo/2017/05/11/11/30/vr-2303043_1280.jpg" alt="Person wearing a virtual reality headset interacting with a digital environment." class="w-full h-80 object-cover">
+          <div class="project-overlay">
+            <h3 class="text-2xl font-bold mb-2">Virtual Safari Experience</h3>
+            <p class="opacity-80 mb-4">An educational AR/VR experience developed in *Unity* to virtually tour Kenyan wildlife parks, using authentic environmental audio and 3D modeling.</p>
+            <div class="flex space-x-4">
+              <a href="#demo" class="text-primary hover:text-white transition-colors font-medium">View Demo <i class="fas fa-external-link-alt ml-1"></i></a>
+              <a href="#case-study-4" class="text-primary hover:text-white transition-colors font-medium">Case Study <i class="fas fa-file-alt ml-1"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="text-center mt-16" data-aos="fade-up" data-aos-delay="600">
+        <a href="https://github.com/your-username?tab=repositories" target="_blank" class="btn btn-outline">See All Projects on GitHub <i class="fas fa-arrow-right ml-2"></i></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="experience" class="py-20 md:py-32 bg-black bg-opacity-30">
+    <div class="container mx-auto px-4 md:px-8">
+      <h2 class="text-3xl md:text-4xl font-bold mb-4 text-center" data-aos="fade-up">Professional <span class="highlight">Experience</span></h2>
+      <p class="text-center text-lg opacity-80 mb-16 max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="100">
+        My journey in technology, from freelance design to full-stack development roles.
+      </p>
+
+      <div class="timeline">
+        <div class="timeline-item" data-aos="fade-up" data-aos-delay="200">
+          <h3 class="text-xl font-bold mb-1">Full Stack Developer</h3>
+          <p class="text-primary mb-2">Tech Innovators Africa | Nairobi, Kenya</p>
+          <p class="text-sm opacity-60 mb-3">Jan 2022 - Present</p>
+          <ul class="list-disc ml-5 text-lg opacity-90 space-y-2">
+            <li>Led development of a scalable e-commerce platform using *Next.js and GraphQL*, resulting in a 40% increase in load speed.</li>
+            <li>Mentored junior developers on best practices for React component architecture and state management.</li>
+            <li>Designed and implemented RESTful APIs using Node.js and MongoDB.</li>
+          </ul>
+        </div>
+
+        <div class="timeline-item" data-aos="fade-up" data-aos-delay="300">
+          <h3 class="text-xl font-bold mb-1">UI/UX Design Intern</h3>
+          <p class="text-primary mb-2">Global Design Studio | Remote</p>
+          <p class="text-sm opacity-60 mb-3">May 2021 - Dec 2021</p>
+          <ul class="list-disc ml-5 text-lg opacity-90 space-y-2">
+            <li>Conducted user research and created high-fidelity prototypes in *Figma* for three major client websites.</li>
+            <li>Established a modular design system that reduced design-to-development time by 25%.</li>
+          </ul>
+        </div>
+        
+        <div class="timeline-item" data-aos="fade-up" data-aos-delay="400">
+          <h3 class="text-xl font-bold mb-1">Freelance Web Designer</h3>
+          <p class="text-primary mb-2">Self-Employed | East Africa</p>
+          <p class="text-sm opacity-60 mb-3">2019 - 2021</p>
+          <ul class="list-disc ml-5 text-lg opacity-90 space-y-2">
+            <li>Delivered over 15 successful websites for small local businesses, emphasizing mobile-first design.</li>
+            <li>Specialized in visual branding that integrated local Kenyan cultural elements.</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="py-20 md:py-32">
+    <div class="container mx-auto px-4 md:px-8">
+      <h2 class="text-3xl md:text-4xl font-bold mb-4 text-center" data-aos="fade-up">Get in <span class="highlight">Touch</span></h2>
+      <p class="text-center text-lg opacity-80 mb-12 max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="100">
+        Have a project idea, need consultation, or just want to discuss African tech trends? Drop me a message!
+      </p>
+
+      <div class="max-w-3xl mx-auto p-8 md:p-12 rounded-2xl shadow-2xl contact-form-bg" data-aos="fade-up" data-aos-delay="200">
+        <div class="relative z-10"> <form action="#success" method="POST" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <input type="text" name="name" placeholder="Your Name" required class="w-full p-3 rounded-lg contact-input focus:placeholder-opacity-0">
+              <input type="email" name="email" placeholder="Your Email" required class="w-full p-3 rounded-lg contact-input focus:placeholder-opacity-0">
+            </div>
+            <input type="text" name="subject" placeholder="Subject" required class="w-full p-3 rounded-lg contact-input focus:placeholder-opacity-0">
+            <textarea name="message" rows="5" placeholder="Your Message" required class="w-full p-3 rounded-lg contact-input focus:placeholder-opacity-0"></textarea>
+            
+            <div class="text-center pt-4">
+              <button type="submit" class="btn btn-primary w-full md:w-auto">
+                Send Message <i class="fas fa-paper-plane ml-2"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-8 mt-16 text-lg" data-aos="fade-up" data-aos-delay="300">
+        <p class="flex items-center justify-center"><i class="fas fa-envelope highlight mr-3 text-xl"></i> <a href="mailto:newton.dev@email.com" class="hover:text-primary transition-colors">newton.dev@email.com</a></p>
+        <p class="flex items-center justify-center"><i class="fas fa-phone highlight mr-3 text-xl"></i> <a href="tel:+254700000000" class="hover:text-primary transition-colors">+254 700 000 000</a></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="sound-toggle" id="soundToggle" aria-label="Toggle Background Sound">
+    <i class="fas fa-volume-up text-white" id="soundIcon"></i>
+  </div>
+  
+  <footer class="py-10 bg-black bg-opacity-50 mt-10">
+    <div class="container mx-auto px-4 md:px-8 text-center text-sm opacity-70 flex flex-col items-center">
+      <p>&copy; <span id="year"></span> Newton. Designed and Developed with <i class="fas fa-heart text-secondary mx-1"></i> from Kenya.</p>
+      <p class="mt-2">Illustrations from Pixabay.</p> </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize AOS
+      AOS.init({
+        duration: 800,
+        once: true,
+        mirror: false
+      });
+
+      // Set current year in footer
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      /* ----------------------------------
+       * 1. THEME TOGGLE LOGIC
+       * ---------------------------------- */
+      const themeToggle = document.getElementById('themeToggle');
+      const body = document.body;
+      const currentTheme = localStorage.getItem('theme');
+
+      // Apply saved theme or default to dark
+      if (currentTheme === 'light') {
+        body.classList.add('light-mode');
+        themeToggle.classList.add('light');
+        themeToggle.querySelector('.toggle-circle i').classList.replace('fa-moon', 'fa-sun');
+      } else {
+        // Default to dark mode if no preference or explicit dark
+        body.classList.remove('light-mode');
+        themeToggle.classList.remove('light');
+        themeToggle.querySelector('.toggle-circle i').classList.replace('fa-sun', 'fa-moon');
+      }
+
+      themeToggle.addEventListener('click', () => {
+        body.classList.toggle('light-mode');
+        themeToggle.classList.toggle('light');
+        const icon = themeToggle.querySelector('.toggle-circle i');
+        
+        if (body.classList.contains('light-mode')) {
+          localStorage.setItem('theme', 'light');
+          icon.classList.replace('fa-moon', 'fa-sun');
+          // Icon color is handled by CSS to always be dark to contrast primary circle
+        } else {
+          localStorage.setItem('theme', 'dark');
+          icon.classList.replace('fa-sun', 'fa-moon');
+        }
+      });
+      
+      /* ----------------------------------
+       * 2. MOBILE MENU LOGIC
+       * ---------------------------------- */
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+      const closeMenuBtn = document.getElementById('closeMenuBtn');
+      
+      mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.remove('hidden');
+        mobileMenu.classList.add('flex');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling when menu is open
+      });
+      
+      const closeMenu = () => {
+        mobileMenu.classList.add('hidden');
+        mobileMenu.classList.remove('flex');
+        document.body.style.overflow = '';
+      };
+      
+      closeMenuBtn.addEventListener('click', closeMenu);
+      
+      // Close menu when a link is clicked
+      mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', closeMenu);
+      });
+
+      /* ----------------------------------
+       * 3. CUSTOM CURSOR LOGIC
+       * ---------------------------------- */
+      const cursor = document.querySelector('.cursor');
+      
+      document.addEventListener('mousemove', e => {
+        gsap.to(cursor, {
+          x: e.clientX,
+          y: e.clientY,
+          ease: "power2.out",
+          duration: 0.2
+        });
+      });
+
+      // Scale cursor on hover for links and buttons
+      document.querySelectorAll('a, button, .theme-toggle, .sound-toggle, .project-card').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          gsap.to(cursor, { scale: 1.5, opacity: 0.5, duration: 0.3 });
+        });
+        el.addEventListener('mouseleave', () => {
+          gsap.to(cursor, { scale: 1, opacity: 1, duration: 0.3 });
+        });
+      });
+      
+      /* ----------------------------------
+       * 4. HOWLER.JS / SOUND TOGGLE (Optional/Stylistic)
+       * ---------------------------------- */
+      const soundToggle = document.getElementById('soundToggle');
+      const soundIcon = document.getElementById('soundIcon');
+      let soundPlaying = false;
+      let backgroundMusic; // Define a variable for the Howl instance
+
+      // Placeholder for actual audio initialization
+      // To implement this, you would replace 'path/to/music.mp3' with a real, small audio file.
+      /*
+      backgroundMusic = new Howl({
+        src: ['path/to/music.mp3'], // Replace with actual audio file
+        loop: true,
+        volume: 0.3 // Lower volume for background music
+      });
+      
+      soundToggle.addEventListener('click', () => {
+        if (soundPlaying) {
+          backgroundMusic.pause();
+          soundIcon.classList.replace('fa-volume-up', 'fa-volume-mute');
+          soundPlaying = false;
+        } else {
+          // Only play if the music hasn't been loaded yet or is stopped
+          if (!backgroundMusic.playing()) {
+            backgroundMusic.play();
+          }
+          soundIcon.classList.replace('fa-volume-mute', 'fa-volume-up');
+          soundPlaying = true;
+        }
+      });
+      // Set initial icon to mute/off state
+      soundIcon.classList.replace('fa-volume-up', 'fa-volume-mute');
+      */
+    });
+  </script>
+</body>
+</html>
