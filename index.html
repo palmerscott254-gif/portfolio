@@ -1,789 +1,139 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Newton — Future-Ready Portfolio</title>
-  <meta name="description" content="A professional, future-forward portfolio showcasing products, experiments, and long-horizon innovation." />
-  <meta name="theme-color" content="#0B1020" />
+  <title>Newton — Futuristic Portfolio Systems</title>
+  <meta name="description" content="Interactive product portfolio with live analytics, CMS-fed case studies, AI assistant, and optimized immersive visuals." />
+  <meta name="theme-color" content="#080d1f" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #070b16;
-      --bg-elev: #0e1530cc;
-      --card: #121a37cc;
-      --text: #f2f6ff;
-      --muted: #a7b4d0;
-      --line: #31406bcc;
-      --brand: #7ef7ff;
-      --brand-2: #9e8cff;
-      --ok: #7cffb6;
-      --warn: #ffd079;
-      --danger: #ff9aa4;
-      --radius: 18px;
-      --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
-      --max: 1160px;
-    }
-
-    :root[data-theme="light"] {
-      --bg: #f4f7ff;
-      --bg-elev: #ffffffd9;
-      --card: #ffffffef;
-      --text: #0f1733;
-      --muted: #5d6b8f;
-      --line: #dbe4ff;
-      --brand: #256cff;
-      --brand-2: #7d47ff;
-      --shadow: 0 20px 50px rgba(13, 34, 85, 0.15);
-    }
-
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; }
-    body {
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: radial-gradient(circle at 10% 20%, #1b2458 0%, transparent 40%),
-                  radial-gradient(circle at 90% 0%, #342062 0%, transparent 35%),
-                  var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      line-height: 1.6;
-      overflow-x: hidden;
-      transition: background-color .25s ease, color .25s ease;
-    }
-
-    #bg-grid {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      opacity: .35;
-      z-index: -1;
-      background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
-      background-size: 42px 42px;
-      mask-image: radial-gradient(circle at center, black 20%, transparent 85%);
-    }
-
-    .wrap { width: min(var(--max), calc(100% - 2rem)); margin: 0 auto; }
-    .glass {
-      background: var(--bg-elev);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      backdrop-filter: blur(14px);
-      box-shadow: var(--shadow);
-    }
-
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      margin-top: .75rem;
-    }
-
-    nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: .75rem 1rem;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: .7rem;
-      font-family: "Space Grotesk", sans-serif;
-      font-weight: 700;
-      letter-spacing: .2px;
-    }
-
-    .orb {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: conic-gradient(from 170deg, var(--brand), var(--brand-2), var(--brand));
-      box-shadow: 0 0 0 2px #fff2, 0 0 40px #68f0ff66;
-    }
-
-    .nav-actions { display: flex; align-items: center; gap: .5rem; }
-    button, .chip {
-      border: 1px solid var(--line);
-      background: linear-gradient(to bottom right, #ffffff14, #ffffff05);
-      color: var(--text);
-      border-radius: 12px;
-      padding: .62rem .9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform .2s ease, border-color .2s ease, background .2s ease;
-    }
-    button:hover, .chip:hover { transform: translateY(-1px); border-color: var(--brand); }
-
-    main { padding-block: 2.25rem 4rem; }
-    .hero {
-      display: grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap: 1.1rem;
-      align-items: stretch;
-    }
-    .hero-card { padding: clamp(1rem, 2vw, 2rem); }
-    h1 {
-      margin: .2rem 0 1rem;
-      font-family: "Space Grotesk", sans-serif;
-      line-height: 1.08;
-      font-size: clamp(1.8rem, 6vw, 4rem);
-      letter-spacing: -0.02em;
-    }
-
-    .lead { color: var(--muted); max-width: 62ch; }
-    .badges { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
-    .chip { font-size: .88rem; }
-
-    .stats {
-      margin-top: 1.1rem;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: .65rem;
-    }
-    .stat {
-      padding: .75rem;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #ffffff08;
-    }
-    .stat b { font-size: 1.1rem; display: block; }
-    .stat span { color: var(--muted); font-size: .86rem; }
-
-    .terminal {
-      padding: 1rem;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      display: grid;
-      gap: .7rem;
-    }
-    .prompt { color: var(--brand); }
-    .sys { color: var(--muted); }
-    .ok { color: var(--ok); }
-
-    section { margin-top: 1rem; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .panel { padding: 1rem; }
-
-    .projects {
-      margin-top: .8rem;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: .8rem;
-    }
-
-    .project { padding: 1rem; position: relative; overflow: hidden; }
-    .project h3 { margin: .15rem 0 .3rem; font-size: 1.05rem; }
-    .project p { margin: 0; color: var(--muted); font-size: .92rem; }
-    .tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .7rem; }
-    .tag { font-size: .74rem; padding: .2rem .45rem; border-radius: 999px; border: 1px solid var(--line); }
-
-    .timeline {
-      margin-top: .8rem;
-      border-top: 1px dashed var(--line);
-      padding-top: 1rem;
-    }
-    .year-row {
-      display: flex;
-      justify-content: space-between;
-      color: var(--muted);
-      font-size: .84rem;
-    }
-    input[type="range"] { width: 100%; accent-color: var(--brand); }
-    .vision { margin-top: .65rem; min-height: 3.5rem; }
-
-    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: .6rem; }
-    .kpi { padding: .8rem; border: 1px solid var(--line); border-radius: 12px; }
-    .kpi b { font-size: 1.1rem; }
-
-    .tiny { font-size: .82rem; color: var(--muted); }
-    .assistant {
-      margin-top: .8rem;
-      display: grid;
-      gap: .5rem;
-    }
-    .chat-log {
-      min-height: 140px;
-      max-height: 240px;
-      overflow: auto;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: .6rem;
-      background: #ffffff08;
-      display: grid;
-      gap: .45rem;
-    }
-    .msg {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: .5rem .6rem;
-      font-size: .9rem;
-    }
-    .msg.user { border-color: var(--brand); }
-
-    .contact {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-    input, textarea, select {
-      width: 100%;
-      background: #ffffff08;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      color: var(--text);
-      padding: .7rem .8rem;
-      font: inherit;
-    }
-    textarea { min-height: 130px; resize: vertical; }
-
-    .footer {
-      margin-top: 1.4rem;
-      padding: .9rem 1rem;
-      display: flex;
-      justify-content: space-between;
-      color: var(--muted);
-      border-top: 1px solid var(--line);
-    }
-
-    dialog {
-      width: min(560px, calc(100% - 2rem));
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: var(--card);
-      color: var(--text);
-      padding: 1rem;
-      box-shadow: var(--shadow);
-    }
-    dialog::backdrop { backdrop-filter: blur(5px); background: #02061299; }
-    .palette-result {
-      width: 100%;
-      text-align: left;
-      margin-top: .5rem;
-      border-radius: 10px;
-      background: #ffffff09;
-    }
-
-    @media (max-width: 980px) {
-      .hero, .grid-2, .projects, .contact { grid-template-columns: 1fr; }
-      .kpis { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      * { animation-duration: .001ms !important; transition: none !important; }
-    }
-  </style>
+  <link rel="stylesheet" href="/src/styles/main.css" />
 </head>
 <body>
-  <div id="bg-grid"></div>
+  <canvas id="particle-canvas" aria-hidden="true"></canvas>
+  <div id="cursor-glow" aria-hidden="true"></div>
 
-  <header class="wrap">
-    <nav class="glass" aria-label="Main navigation">
-      <div class="brand"><span class="orb" aria-hidden="true"></span> Newton / Builder of Durable Systems</div>
-      <div class="nav-actions">
-        <button id="cmdBtn" type="button" aria-label="Open command palette">⌘ Portfolio</button>
-        <button id="themeBtn" type="button" aria-label="Toggle color theme">Theme</button>
-      </div>
-    </nav>
+  <header class="site-header shell reveal">
+    <div class="brand">
+      <span class="brand-orb" aria-hidden="true"></span>
+      <strong>Newton / Durable Product Architect</strong>
+    </div>
+    <div class="header-actions">
+      <button id="themeToggle" type="button">Theme</button>
+      <button id="commandToggle" type="button">⌘ Palette</button>
+    </div>
   </header>
 
-  <main class="wrap">
-    <section class="hero">
-      <article class="hero-card glass">
-        <p class="chip" style="display: inline-block; margin: 0;">Now shipping at the edge of design + engineering + strategy</p>
-        <h1>I design products that stay relevant across technology generations.</h1>
-        <p class="lead">
-          This portfolio is built as a living system, not a static brochure. It adapts by context, exposes measurable outcomes, and demonstrates long-horizon thinking with practical execution today.
-        </p>
-        <div class="badges" aria-label="Core disciplines">
-          <span class="chip">Product Architecture</span>
-          <span class="chip">AI UX</span>
-          <span class="chip">Full-Stack Delivery</span>
-          <span class="chip">Research-to-Revenue</span>
+  <main class="shell stack-xl" id="appRoot">
+    <section class="hero panel reveal" id="hero">
+      <div class="hero-content stack-m">
+        <p class="chip">Creative Engineering × Product Strategy × AI Systems</p>
+        <h1>Built to feel futuristic today and still credible decades from now.</h1>
+        <p class="lead">This portfolio is a real interactive product: backend-driven case studies, AI-guided project selection, measurable interactions, and progressive visual depth that adapts to device performance.</p>
+        <div class="hero-actions">
+          <a href="#projects" class="btn">Explore Work</a>
+          <a href="#contact" class="btn btn-ghost">Start a Build</a>
         </div>
-        <div class="stats" aria-label="Summary stats">
-          <div class="stat"><b>32+</b><span>Shipped products</span></div>
-          <div class="stat"><b>98%</b><span>Client renewal rate</span></div>
-          <div class="stat"><b>9.4/10</b><span>Stakeholder clarity score</span></div>
+        <div class="metric-grid">
+          <article class="metric"><b data-kpi="0" data-target="99">0%</b><span>Delivery reliability</span></article>
+          <article class="metric"><b data-kpi="1" data-target="86">0%</b><span>Execution velocity</span></article>
+          <article class="metric"><b data-kpi="2" data-target="78">0%</b><span>UX sentiment uplift</span></article>
+          <article class="metric"><b data-kpi="3" data-target="64">0%</b><span>Carbon-aware ops</span></article>
         </div>
-      </article>
-
-      <aside class="terminal glass" aria-label="Live mission console">
-        <div><span class="prompt">$</span> status --operator="newton"</div>
-        <div class="sys">Current timezone: <strong id="localClock">--:--:--</strong></div>
-        <div class="sys">Availability: <strong id="availability" class="ok">online</strong></div>
-        <div class="sys">Focus mode: <strong id="focusMode">Deep Build Window</strong></div>
-        <div class="sys">Next milestone: <strong>Autonomous Product Storytelling Layer</strong></div>
-        <button id="vcardBtn" type="button">Download Smart Contact Card</button>
+      </div>
+      <aside class="hero-console panel-soft stack-s reveal-delay" id="threeMount">
+        <div><span class="prompt">$</span> systems.status --operator="newton"</div>
+        <div class="subtle">Local time: <strong id="localClock">--:--:--</strong></div>
+        <div class="subtle">Availability: <strong id="availability">checking…</strong></div>
+        <div class="subtle">Backend: <strong id="apiHealth">checking…</strong></div>
+        <div class="subtle">Tracked events: <strong id="eventsTotal">0</strong></div>
       </aside>
     </section>
 
-    <section class="grid-2">
-      <article class="panel glass" aria-labelledby="projects-title">
-        <h2 id="projects-title">Flagship Work</h2>
-        <p class="lead">Filter projects by strategic intent and technical depth.</p>
-        <div class="badges" id="filterBar"></div>
-        <div class="projects" id="projectGrid" aria-live="polite"></div>
-      </article>
+    <section id="projects" class="panel stack-m reveal">
+      <div class="section-head">
+        <h2>Case Studies</h2>
+        <p class="subtle">Source: <strong id="projectSource">seed</strong></p>
+      </div>
+      <div id="filterBar" class="row-wrap"></div>
+      <div id="projectGrid" class="project-grid"></div>
+    </section>
 
-      <article class="panel glass" aria-labelledby="advisor-title">
-        <h2 id="advisor-title">Portfolio Advisor</h2>
-        <p class="lead">Choose your priority to get a curated path through my work.</p>
-        <label for="goalSelect">What matters most right now?</label>
+    <section class="split-grid">
+      <article class="panel stack-m reveal" id="advisor">
+        <h2>Strategic Advisor</h2>
+        <p class="subtle">Pick your goal and get a curated sequence through the portfolio.</p>
+        <label for="goalSelect">Current objective</label>
         <select id="goalSelect">
-          <option value="growth">Growth & market expansion</option>
-          <option value="automation">Automation & cost reduction</option>
+          <option value="growth">Growth and expansion</option>
+          <option value="automation">Automation and cost reduction</option>
           <option value="experience">Premium user experience</option>
           <option value="innovation">High-risk innovation</option>
         </select>
-        <div class="vision" id="advisorOutput">Selected journey will appear here.</div>
-        <button id="runAdvisor" type="button">Generate Strategic Route</button>
+        <button id="runAdvisor" type="button" class="btn">Generate Route</button>
+        <p id="advisorOutput" class="panel-soft">Your route appears here.</p>
+      </article>
+
+      <article class="panel stack-m reveal" id="horizon">
+        <h2>100-Year Horizon</h2>
+        <p class="subtle">Simulate how today’s architecture decisions age over a century.</p>
+        <div class="row-between subtle"><span>2026</span><strong id="horizonYear">2038</strong><span>2126</span></div>
+        <input id="horizonRange" type="range" min="2026" max="2126" value="2038" step="1" />
+        <p id="horizonInsight" class="panel-soft"></p>
       </article>
     </section>
 
-    <section class="panel glass" aria-labelledby="horizon-title">
-      <h2 id="horizon-title">100-Year Innovation Horizon</h2>
-      <p class="lead">Move through long-term phases to view how today’s decisions age over a century.</p>
-      <div class="timeline">
-        <div class="year-row"><span>2026</span><span id="horizonYear">2035</span><span>2126</span></div>
-        <input id="horizonRange" type="range" min="2026" max="2126" value="2035" step="1" />
-        <p class="vision" id="horizonInsight"></p>
-      </div>
-    </section>
+    <section class="split-grid" id="assistant">
+      <article class="panel stack-m reveal">
+        <h2>AI Case-Study Assistant</h2>
+        <p class="subtle">Grounded responses from your real projects via backend `/api/chat`.</p>
+        <div id="chatLog" class="chat-log" aria-live="polite"></div>
+        <div class="row-gap">
+          <input id="assistantInput" placeholder="What should I show a hospital CTO focused on automation?" />
+          <button id="assistantSend" class="btn" type="button">Ask Assistant</button>
+        </div>
+      </article>
 
-    <section class="panel glass" aria-labelledby="metrics-title">
-      <h2 id="metrics-title">Execution Metrics</h2>
-      <p class="tiny">Backend: <span id="apiHealth">Checking API…</span> · Events tracked: <span id="eventsTotal">0</span></p>
-      <div class="kpis">
-        <div class="kpi"><b id="k1">0</b><div>Deployment reliability</div></div>
-        <div class="kpi"><b id="k2">0</b><div>Velocity index</div></div>
-        <div class="kpi"><b id="k3">0</b><div>UX sentiment uplift</div></div>
-        <div class="kpi"><b id="k4">0</b><div>Carbon-aware optimization</div></div>
-      </div>
-    </section>
-
-    <section class="contact">
-      <article class="panel glass">
+      <article class="panel stack-m reveal" id="contact">
         <h2>Engagement Intake</h2>
-        <p class="lead">A structured brief helps produce high-quality work faster.</p>
-        <form id="contactForm">
+        <p class="subtle">Capture priorities quickly and route into a structured outreach message.</p>
+        <form id="contactForm" class="stack-s">
           <label for="name">Name</label>
           <input id="name" name="name" required />
           <label for="email">Email</label>
           <input id="email" name="email" type="email" required />
-          <label for="scope">Project scope</label>
-          <textarea id="scope" name="scope" placeholder="Goals, timeline, constraints"></textarea>
-          <button type="submit">Compose Priority Email</button>
+          <label for="scope">Scope</label>
+          <textarea id="scope" name="scope" placeholder="Goals, constraints, timeline"></textarea>
+          <div class="row-wrap">
+            <button type="submit" class="btn">Compose Email</button>
+            <button id="vcardBtn" type="button" class="btn btn-ghost">Download vCard</button>
+            <button id="copyState" type="button" class="btn btn-ghost">Copy Snapshot</button>
+          </div>
         </form>
-      </article>
-
-      <article class="panel glass">
-        <h2>Future Lab</h2>
-        <p class="lead">Experimental modules demonstrating practical innovation.</p>
-        <p class="tiny">Project source: <span id="projectSource">seed</span></p>
-        <ul>
-          <li>Live analytics events + backend summary endpoint</li>
-          <li>CMS-driven case studies with local seed fallback</li>
-          <li>AI assistant grounded in your real portfolio projects</li>
-          <li>Contextual command palette (Ctrl/Cmd + K)</li>
-        </ul>
-        <div class="assistant" aria-label="AI assistant panel">
-          <label for="assistantInput">Ask the portfolio assistant</label>
-          <div id="chatLog" class="chat-log" aria-live="polite"></div>
-          <input id="assistantInput" placeholder="Which projects are best for automation in healthcare?" />
-          <button id="assistantSend" type="button">Ask Assistant</button>
-        </div>
-        <button id="copyState" type="button">Copy Project Snapshot</button>
       </article>
     </section>
 
-    <footer class="footer">
-      <span>© <span id="year"></span> Newton. Engineered for longevity.</span>
+    <footer class="site-footer subtle reveal">
+      <span>© <span id="year"></span> Newton. Crafted for long-horizon relevance.</span>
       <span>Shortcut: Ctrl/Cmd + K</span>
     </footer>
   </main>
 
   <dialog id="palette" aria-label="Command palette">
-    <form method="dialog" style="display: grid; gap: .5rem;">
+    <form method="dialog" class="stack-s">
       <strong>Command Palette</strong>
-      <input id="commandInput" placeholder="Try: projects, advisor, horizon, contact" />
-      <button class="palette-result" type="button" data-cmd="projects">Go to Flagship Work</button>
-      <button class="palette-result" type="button" data-cmd="advisor">Run Portfolio Advisor</button>
-      <button class="palette-result" type="button" data-cmd="horizon">Open 100-Year Horizon</button>
-      <button class="palette-result" type="button" data-cmd="contact">Jump to Engagement Intake</button>
-      <button type="submit">Close</button>
+      <input id="commandInput" placeholder="projects, advisor, horizon, assistant, contact" />
+      <button type="button" class="palette-item" data-cmd="projects">Open Case Studies</button>
+      <button type="button" class="palette-item" data-cmd="advisor">Run Strategic Advisor</button>
+      <button type="button" class="palette-item" data-cmd="horizon">Open Horizon Simulator</button>
+      <button type="button" class="palette-item" data-cmd="assistant">Focus AI Assistant</button>
+      <button type="button" class="palette-item" data-cmd="contact">Open Intake Form</button>
+      <button type="submit" class="btn">Close</button>
     </form>
   </dialog>
 
-  <script>
-    const root = document.documentElement;
-    const year = document.getElementById("year");
-    year.textContent = new Date().getFullYear();
-    const apiHealth = document.getElementById("apiHealth");
-    const eventsTotal = document.getElementById("eventsTotal");
-    const projectSource = document.getElementById("projectSource");
-    const chatLog = document.getElementById("chatLog");
-
-    function addMessage(role, text) {
-      const item = document.createElement("div");
-      item.className = `msg ${role}`;
-      item.textContent = text;
-      chatLog.appendChild(item);
-      chatLog.scrollTop = chatLog.scrollHeight;
-    }
-
-    async function trackEvent(event, metadata = {}) {
-      try {
-        await fetch("/api/analytics/events", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ event, path: location.pathname, metadata })
-        });
-      } catch {
-      }
-    }
-
-    async function refreshAnalyticsSummary() {
-      try {
-        const response = await fetch("/api/analytics/summary");
-        if (!response.ok) return;
-        const payload = await response.json();
-        eventsTotal.textContent = String(payload.totalEvents || 0);
-      } catch {
-      }
-    }
-
-    async function checkApiHealth() {
-      try {
-        const response = await fetch("/api/health");
-        if (!response.ok) throw new Error("health not ok");
-        const payload = await response.json();
-        apiHealth.textContent = `online (${payload.service})`;
-        apiHealth.style.color = "var(--ok)";
-      } catch {
-        apiHealth.textContent = "offline (start backend server)";
-        apiHealth.style.color = "var(--warn)";
-      }
-    }
-
-    const fallbackProjects = [
-      { name: "Pan-African Fintech Grid", desc: "Interoperable payment rails for fragmented markets.", tags: ["growth", "automation"] },
-      { name: "Medical Triage Copilot", desc: "Reduced emergency triage decision latency by 41%.", tags: ["automation", "experience"] },
-      { name: "Climate Signal Engine", desc: "Forecast-ready dashboard for policy and logistics teams.", tags: ["innovation", "growth"] },
-      { name: "Neural Story Commerce", desc: "Adaptive storytelling that increased conversion quality.", tags: ["experience", "innovation"] },
-      { name: "Ops Pulse Platform", desc: "Unified observability across engineering and business units.", tags: ["automation", "growth"] },
-      { name: "Public Service UX Stack", desc: "Modernized digital access for high-volume civic workflows.", tags: ["experience"] }
-    ];
-    let projects = [...fallbackProjects];
-
-    const horizonEvents = {
-      2026: "Build durable foundations: accessibility, resilience, and measurable outcomes.",
-      2035: "Create interoperable product ecosystems that survive platform shifts.",
-      2050: "Scale human-AI collaboration models that preserve trust and accountability.",
-      2075: "Transition from products to adaptive socio-technical infrastructure.",
-      2100: "Design for intergenerational maintainability and ethics continuity.",
-      2126: "Portfolio matures into a legacy framework for future builders."
-    };
-
-    function setTheme(nextTheme) {
-      root.setAttribute("data-theme", nextTheme);
-      localStorage.setItem("theme", nextTheme);
-    }
-
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme) {
-      setTheme(savedTheme);
-    } else {
-      const hour = new Date().getHours();
-      setTheme(hour >= 7 && hour <= 18 ? "light" : "dark");
-    }
-
-    document.getElementById("themeBtn").addEventListener("click", () => {
-      const current = root.getAttribute("data-theme") || "dark";
-      setTheme(current === "dark" ? "light" : "dark");
-    });
-
-    const filterBar = document.getElementById("filterBar");
-    const projectGrid = document.getElementById("projectGrid");
-    const filters = ["all", "growth", "automation", "experience", "innovation"];
-    let activeFilter = "all";
-
-    async function loadProjectsFromBackend() {
-      try {
-        const response = await fetch("/api/projects");
-        if (!response.ok) throw new Error("projects not available");
-        const payload = await response.json();
-        if (Array.isArray(payload.projects) && payload.projects.length > 0) {
-          projects = payload.projects;
-        }
-        projectSource.textContent = payload.source || "seed";
-        trackEvent("projects_loaded", { source: payload.source || "seed" });
-      } catch {
-        projects = [...fallbackProjects];
-        projectSource.textContent = "seed";
-      }
-      renderProjects();
-      refreshAnalyticsSummary();
-    }
-
-    function renderFilters() {
-      filterBar.innerHTML = "";
-      filters.forEach((item) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "chip";
-        btn.textContent = item;
-        if (item === activeFilter) btn.style.borderColor = "var(--brand)";
-        btn.addEventListener("click", () => {
-          activeFilter = item;
-          renderFilters();
-          renderProjects();
-        });
-        filterBar.appendChild(btn);
-      });
-    }
-
-    function renderProjects() {
-      const visible = activeFilter === "all"
-        ? projects
-        : projects.filter((project) => project.tags.includes(activeFilter));
-      projectGrid.innerHTML = "";
-      visible.forEach((project) => {
-        const card = document.createElement("article");
-        card.className = "project glass";
-        card.innerHTML = `
-          <h3>${project.name}</h3>
-          <p>${project.desc}</p>
-          <div class="tags">${project.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
-        `;
-        projectGrid.appendChild(card);
-      });
-    }
-
-    renderFilters();
-    renderProjects();
-    loadProjectsFromBackend();
-
-    const advisor = {
-      growth: "Start with Pan-African Fintech Grid → Ops Pulse Platform → Climate Signal Engine.",
-      automation: "Start with Medical Triage Copilot → Ops Pulse Platform → Fintech Grid.",
-      experience: "Start with Neural Story Commerce → Public Service UX Stack → Medical Triage Copilot.",
-      innovation: "Start with Climate Signal Engine → Neural Story Commerce → Legacy system architecture session."
-    };
-
-    const goalSelect = document.getElementById("goalSelect");
-    const advisorOutput = document.getElementById("advisorOutput");
-    document.getElementById("runAdvisor").addEventListener("click", () => {
-      advisorOutput.textContent = advisor[goalSelect.value];
-      trackEvent("advisor_run", { goal: goalSelect.value });
-      refreshAnalyticsSummary();
-    });
-
-    const horizonRange = document.getElementById("horizonRange");
-    const horizonYear = document.getElementById("horizonYear");
-    const horizonInsight = document.getElementById("horizonInsight");
-
-    function nearestHorizonYear(value) {
-      const years = Object.keys(horizonEvents).map(Number);
-      return years.reduce((previous, current) =>
-        Math.abs(current - value) < Math.abs(previous - value) ? current : previous
-      );
-    }
-
-    function renderHorizon() {
-      const value = Number(horizonRange.value);
-      const key = nearestHorizonYear(value);
-      horizonYear.textContent = value;
-      horizonInsight.textContent = horizonEvents[key];
-    }
-
-    horizonRange.addEventListener("input", renderHorizon);
-    horizonRange.addEventListener("change", () => {
-      trackEvent("horizon_changed", { year: Number(horizonRange.value) });
-      refreshAnalyticsSummary();
-    });
-    renderHorizon();
-
-    const clock = document.getElementById("localClock");
-    const availability = document.getElementById("availability");
-    const focusMode = document.getElementById("focusMode");
-
-    function updateClock() {
-      const now = new Date();
-      clock.textContent = now.toLocaleTimeString();
-      const hour = now.getHours();
-      const online = hour >= 7 && hour <= 20;
-      availability.textContent = online ? "online" : "async-mode";
-      availability.style.color = online ? "var(--ok)" : "var(--warn)";
-      focusMode.textContent = online ? "Client Collaboration Window" : "Deep Build Window";
-    }
-
-    updateClock();
-    setInterval(updateClock, 1000);
-
-    function animateValue(id, target, suffix = "%") {
-      const node = document.getElementById(id);
-      let current = 0;
-      const step = Math.max(1, Math.floor(target / 45));
-      const timer = setInterval(() => {
-        current += step;
-        if (current >= target) {
-          current = target;
-          clearInterval(timer);
-        }
-        node.textContent = `${current}${suffix}`;
-      }, 22);
-    }
-
-    animateValue("k1", 99);
-    animateValue("k2", 86);
-    animateValue("k3", 74);
-    animateValue("k4", 63);
-
-    const palette = document.getElementById("palette");
-    const cmdBtn = document.getElementById("cmdBtn");
-    const commandInput = document.getElementById("commandInput");
-
-    function openPalette() {
-      palette.showModal();
-      setTimeout(() => commandInput.focus(), 20);
-      trackEvent("palette_opened");
-    }
-
-    cmdBtn.addEventListener("click", openPalette);
-    document.addEventListener("keydown", (event) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        openPalette();
-      }
-    });
-
-    function scrollToHeading(text) {
-      const headings = [...document.querySelectorAll("h2")];
-      const target = headings.find((node) => node.textContent.toLowerCase().includes(text));
-      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-
-    document.querySelectorAll("[data-cmd]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const cmd = button.dataset.cmd;
-        palette.close();
-        if (cmd === "advisor") {
-          scrollToHeading("advisor");
-          document.getElementById("runAdvisor").click();
-          return;
-        }
-        if (cmd === "projects") return scrollToHeading("flagship");
-        if (cmd === "horizon") return scrollToHeading("100-year");
-        if (cmd === "contact") return scrollToHeading("engagement");
-      });
-    });
-
-    commandInput.addEventListener("input", () => {
-      const query = commandInput.value.toLowerCase();
-      document.querySelectorAll("[data-cmd]").forEach((button) => {
-        button.style.display = button.textContent.toLowerCase().includes(query) ? "block" : "none";
-      });
-    });
-
-    document.getElementById("contactForm").addEventListener("submit", (event) => {
-      event.preventDefault();
-      const name = document.getElementById("name").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const scope = document.getElementById("scope").value.trim();
-      const subject = `Project Inquiry from ${name}`;
-      const body = `Name: ${name}\nEmail: ${email}\n\nProject Scope:\n${scope}`;
-      window.location.href = `mailto:hello@newton.build?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      trackEvent("contact_mailto_composed", { hasScope: Boolean(scope) });
-      refreshAnalyticsSummary();
-    });
-
-    document.getElementById("copyState").addEventListener("click", async () => {
-      const snapshot = {
-        timestamp: new Date().toISOString(),
-        activeFilter,
-        advisorGoal: goalSelect.value,
-        horizonYear: Number(horizonRange.value),
-        theme: root.getAttribute("data-theme") || "dark"
-      };
-      try {
-        await navigator.clipboard.writeText(JSON.stringify(snapshot, null, 2));
-        alert("Snapshot copied to clipboard.");
-        trackEvent("snapshot_copied");
-        refreshAnalyticsSummary();
-      } catch {
-        alert("Clipboard access is unavailable in this browser context.");
-      }
-    });
-
-    document.getElementById("vcardBtn").addEventListener("click", () => {
-      const card = [
-        "BEGIN:VCARD",
-        "VERSION:3.0",
-        "FN:Newton",
-        "TITLE:Product Designer & Full-Stack Developer",
-        "EMAIL:hello@newton.build",
-        "URL:https://portfolio.newton.build",
-        "NOTE:Building durable digital systems for long-term relevance.",
-        "END:VCARD"
-      ].join("\n");
-
-      const blob = new Blob([card], { type: "text/vcard;charset=utf-8" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "newton-contact.vcf";
-      link.click();
-      URL.revokeObjectURL(link.href);
-      trackEvent("vcard_downloaded");
-      refreshAnalyticsSummary();
-    });
-
-    const assistantInput = document.getElementById("assistantInput");
-    const assistantSend = document.getElementById("assistantSend");
-    addMessage("assistant", "Ask me about any case study and I’ll recommend the best-fit projects.");
-
-    async function askAssistant() {
-      const message = assistantInput.value.trim();
-      if (!message) return;
-      assistantInput.value = "";
-      addMessage("user", message);
-      assistantSend.disabled = true;
-
-      try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, activeFilter })
-        });
-
-        if (!response.ok) {
-          addMessage("assistant", "Assistant is temporarily unavailable.");
-        } else {
-          const payload = await response.json();
-          addMessage("assistant", payload.reply || "No response generated.");
-        }
-      } catch {
-        addMessage("assistant", "Cannot reach assistant backend. Start the local server and retry.");
-      } finally {
-        assistantSend.disabled = false;
-        trackEvent("assistant_asked", { length: message.length });
-        refreshAnalyticsSummary();
-      }
-    }
-
-    assistantSend.addEventListener("click", askAssistant);
-    assistantInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        askAssistant();
-      }
-    });
-
-    trackEvent("page_view", { title: document.title });
-    checkApiHealth();
-    refreshAnalyticsSummary();
-  </script>
+  <script type="module" src="/src/js/main.js"></script>
 </body>
 </html>
