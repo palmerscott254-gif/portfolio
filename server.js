@@ -29,8 +29,9 @@ async function readSeedProjects() {
 
 function normalizeContentfulProject(item) {
   const fields = item?.fields || {};
+  const fallbackId = item?.sys?.id || fields.slug || String(fields.title || "untitled").toLowerCase().replace(/\s+/g, "-");
   return {
-    id: item?.sys?.id || fields.slug || fields.title || crypto.randomUUID(),
+    id: fallbackId,
     name: fields.title || "Untitled case study",
     desc: fields.summary || fields.description || "No summary provided.",
     impact: fields.impact || "Impact details pending.",
