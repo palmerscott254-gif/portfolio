@@ -32,6 +32,10 @@ export async function getProjects() {
   return apiGet("/api/projects");
 }
 
+export async function getProjectMonitorStatus() {
+  return apiGet("/api/monitor/projects");
+}
+
 export async function trackEvent(event, metadata = {}) {
   try {
     await apiPost("/api/analytics/events", {

@@ -53,6 +53,24 @@ const neuralStates = [
   "Offline focus block"
 ];
 
+const monitoredProjects = [
+  {
+    id: "pie-global-furnitures",
+    name: "PIE Global Furnitures Website",
+    url: process.env.MONITOR_PIE_GLOBAL_FURNITURES_URL || ""
+  },
+  {
+    id: "cpa-academy",
+    name: "CPA Academy Website",
+    url: process.env.MONITOR_CPA_ACADEMY_URL || ""
+  },
+  {
+    id: "scholsey-security-app",
+    name: "Scholsey Security App",
+    url: process.env.MONITOR_SCHOLSEY_SECURITY_APP_URL || ""
+  }
+];
+
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(__dirname));
 
@@ -300,18 +318,77 @@ function retrieveContext(query, docs) {
     .join("\n\n");
 }
 
+async function checkProjectHealth(project) {
+  if (!project.url) {
+    return {
+      id: project.id,
+      name: project.name,
+      url: "",
+      status: "not-configured",
+      latencyMs: null,
+      statusCode: null,
+      checkedAt: new Date().toISOString()
+    };
+  }
+
+  const startedAt = Date.now();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+  try {
+    const response = await fetch(project.url, {
+      method: "GET",
+      signal: controller.signal,
+      redirect: "follow"
+    });
+    clearTimeout(timeoutId);
+
+    const latencyMs = Date.now() - startedAt;
+    const status = response.ok ? "online" : "degraded";
+
+    return {
+      id: project.id,
+      name: project.name,
+      url: project.url,
+      status,
+      latencyMs,
+      statusCode: response.status,
+      checkedAt: new Date().toISOString()
+    };
+  } catch {
+    clearTimeout(timeoutId);
+    return {
+      id: project.id,
+      name: project.name,
+      url: project.url,
+      status: "offline",
+      latencyMs: null,
+      statusCode: null,
+      checkedAt: new Date().toISOString()
+    };
+  }
+}
+
 function currentNeuralActivity() {
   pulseTick += 1;
   return neuralStates[pulseTick % neuralStates.length];
 }
 
 function pulseSnapshot() {
+  const now = new Date();
   return {
-    at: new Date().toISOString(),
+    at: now.toISOString(),
     visitors: pulseClients.size,
     neuralActivity: currentNeuralActivity(),
     archiveLastSync: archiveState.lastSyncAt,
-    yearsExperience: archiveState.yearsExperience
+    yearsExperience: archiveState.yearsExperience,
+    serverDate: now.toLocaleDateString("en-GB", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "2-digit"
+    }),
+    serverTime: now.toLocaleTimeString()
   };
 }
 
@@ -340,6 +417,23 @@ app.get("/api/health", (_req, res) => {
 app.get("/api/projects", async (_req, res) => {
   const result = await fetchContentfulProjects();
   res.json(result);
+});
+
+app.get("/api/monitor/projects", async (_req, res) => {
+  const checks = await Promise.all(monitoredProjects.map(checkProjectHealth));
+  const summary = {
+    total: checks.length,
+    online: checks.filter((item) => item.status === "online").length,
+    degraded: checks.filter((item) => item.status === "degraded").length,
+    offline: checks.filter((item) => item.status === "offline").length,
+    notConfigured: checks.filter((item) => item.status === "not-configured").length
+  };
+
+  res.json({
+    checkedAt: new Date().toISOString(),
+    summary,
+    projects: checks
+  });
 });
 
 app.post("/api/analytics/events", async (req, res) => {
@@ -451,7 +545,7 @@ app.post("/api/chat", async (req, res) => {
 
 setInterval(() => {
   broadcastPulse();
-}, 5000);
+}, 1000);
 
 setInterval(() => {
   syncArchive();

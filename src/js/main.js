@@ -12,7 +12,8 @@ import {
   askAssistant,
   getArchiveStatus,
   syncArchiveNow,
-  getLedger
+  getLedger,
+  getProjectMonitorStatus
 } from "./api/client.js";
 import { store, setState } from "./state/store.js";
 import { renderFilterBar, renderProjectGrid } from "./components/projects.js";
@@ -36,10 +37,17 @@ const projectForensic = document.getElementById("projectForensic");
 const archiveSummary = document.getElementById("archiveSummary");
 const archiveSyncBtn = document.getElementById("archiveSyncBtn");
 const resetLayoutBtn = document.getElementById("resetLayoutBtn");
+const monitorSummary = document.getElementById("monitorSummary");
+const monitorList = document.getElementById("monitorList");
+const monitorRefreshBtn = document.getElementById("monitorRefreshBtn");
 const ledgerHash = document.getElementById("ledgerHash");
 const pulseVisitors = document.getElementById("pulseVisitors");
 const pulseActivity = document.getElementById("pulseActivity");
 const pulseSynced = document.getElementById("pulseSynced");
+const pulseDate = document.getElementById("pulseDate");
+const pulseTime = document.getElementById("pulseTime");
+const ownerDate = document.getElementById("ownerDate");
+const ownerTime = document.getElementById("ownerTime");
 const terminalOutput = document.getElementById("terminalOutput");
 const terminalForm = document.getElementById("terminalForm");
 const terminalInput = document.getElementById("terminalInput");
@@ -48,6 +56,7 @@ const assistantInput = document.getElementById("assistantInput");
 const assistantSend = document.getElementById("assistantSend");
 const eventsTotal = document.getElementById("eventsTotal");
 const FULL_SITE_LAYOUT = true;
+const VALID_MODES = new Set(["legacy", "modern", "spatial"]);
 
 function saveLayout() {
   if (FULL_SITE_LAYOUT) return;
@@ -121,16 +130,18 @@ function setupTheme() {
 }
 
 function applyMode(mode) {
-  root.setAttribute("data-mode", mode);
-  modeSelect.value = mode;
-  setState({ mode });
-  localStorage.setItem("system.mode", mode);
+  const safeMode = VALID_MODES.has(mode) ? mode : detectMode();
+  root.setAttribute("data-mode", safeMode);
+  if (modeSelect) modeSelect.value = safeMode;
+  setState({ mode: safeMode });
+  localStorage.setItem("system.mode", safeMode);
 }
 
 function setupMode() {
-  const saved = localStorage.getItem("system.mode") || detectMode();
+  const rawSaved = localStorage.getItem("system.mode");
+  const saved = VALID_MODES.has(rawSaved) ? rawSaved : detectMode();
   applyMode(saved);
-  modeSelect.addEventListener("change", async () => {
+  modeSelect?.addEventListener("change", async () => {
     applyMode(modeSelect.value);
     await trackEvent("mode_change", { mode: modeSelect.value });
   });
@@ -596,6 +607,11 @@ function setupAssistant() {
 }
 
 function setupPulse() {
+  const setOwnerClock = (dateText, timeText) => {
+    if (ownerDate) ownerDate.textContent = dateText;
+    if (ownerTime) ownerTime.textContent = timeText;
+  };
+
   try {
     const protocol = location.protocol === "https:" ? "wss" : "ws";
     const socket = new WebSocket(`${protocol}://${location.host}/ws/pulse`);
@@ -608,9 +624,29 @@ function setupPulse() {
       pulseSynced.textContent = data.archiveLastSync
         ? new Date(data.archiveLastSync).toLocaleTimeString()
         : "pending";
+      const nextDate = data.serverDate || "--";
+      const nextTime = data.serverTime || "--:--:--";
+      if (pulseDate) pulseDate.textContent = nextDate;
+      if (pulseTime) pulseTime.textContent = nextTime;
+      setOwnerClock(nextDate, nextTime);
     });
   } catch {
     pulseActivity.textContent = "Realtime channel unavailable";
+    const fallbackTick = () => {
+      const now = new Date();
+      const nextDate = now.toLocaleDateString("en-GB", {
+        weekday: "short",
+        year: "numeric",
+        month: "short",
+        day: "2-digit"
+      });
+      const nextTime = now.toLocaleTimeString();
+      if (pulseDate) pulseDate.textContent = nextDate;
+      if (pulseTime) pulseTime.textContent = nextTime;
+      setOwnerClock(nextDate, nextTime);
+    };
+    fallbackTick();
+    setInterval(fallbackTick, 1000);
   }
 }
 
@@ -662,6 +698,45 @@ async function loadArchive() {
   });
 }
 
+function monitorBadgeClass(status) {
+  if (status === "online") return "status-online";
+  if (status === "degraded") return "status-degraded";
+  if (status === "offline") return "status-offline";
+  return "status-unset";
+}
+
+function renderMonitor(payload) {
+  const summary = payload?.summary || {};
+  monitorSummary.textContent = `Online ${summary.online || 0}/${summary.total || 0} • Degraded ${summary.degraded || 0} • Offline ${summary.offline || 0} • Not configured ${summary.notConfigured || 0}`;
+
+  monitorList.innerHTML = "";
+  (payload?.projects || []).forEach((project) => {
+    const row = document.createElement("div");
+    row.className = "monitor-row";
+    row.innerHTML = `
+      <div>
+        <strong>${project.name}</strong>
+        <div class="muted monitor-url">${project.url || "URL not configured"}</div>
+      </div>
+      <div class="monitor-right">
+        <span class="status-pill ${monitorBadgeClass(project.status)}">${project.status}</span>
+        <span class="muted">${project.latencyMs ? `${project.latencyMs}ms` : "--"}</span>
+      </div>
+    `;
+    monitorList.appendChild(row);
+  });
+}
+
+async function loadProjectMonitor() {
+  try {
+    const payload = await getProjectMonitorStatus();
+    renderMonitor(payload);
+  } catch {
+    monitorSummary.textContent = "Monitor unavailable.";
+    monitorList.innerHTML = "";
+  }
+}
+
 async function init() {
   if (FULL_SITE_LAYOUT) {
     root.setAttribute("data-layout", "stacked");
@@ -686,8 +761,15 @@ async function init() {
     loadProjects(),
     loadHealth(),
     loadAnalytics(),
-    loadArchive()
+    loadArchive(),
+    loadProjectMonitor()
   ]);
+
+  monitorRefreshBtn?.addEventListener("click", async () => {
+    monitorRefreshBtn.disabled = true;
+    await loadProjectMonitor();
+    monitorRefreshBtn.disabled = false;
+  });
 
   resetLayoutBtn?.addEventListener("click", () => {
     localStorage.removeItem("desktop.layout");

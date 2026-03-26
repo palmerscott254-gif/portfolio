@@ -37,6 +37,36 @@
   </header>
 
   <main id="desktop" class="desktop" aria-label="Desktop workspace">
+    <section class="os-window" data-window="owner" data-w="760" data-h="380">
+      <header class="window-head">
+        <strong>Owner Profile</strong>
+        <div class="window-actions">
+          <button type="button" data-action="minimize">_</button>
+          <button type="button" data-action="close">×</button>
+        </div>
+      </header>
+      <div class="window-body">
+        <article class="panel-soft owner-card code-profile">
+          <div class="code-line"><span class="token-comment"># owner_profile.py</span></div>
+          <div class="code-line"><span class="token-var">owner</span> <span class="token-op">=</span> <span class="token-key">{</span></div>
+          <div class="code-line indent"><span class="token-str">"name"</span><span class="token-op">:</span> <span class="token-str">"Newton"</span><span class="token-op">,</span></div>
+          <div class="code-line indent"><span class="token-str">"role"</span><span class="token-op">:</span> <span class="token-str">"Product Designer & Full-Stack Developer"</span><span class="token-op">,</span></div>
+          <div class="code-line indent"><span class="token-str">"focus"</span><span class="token-op">:</span> <span class="token-str">"AI + Realtime + Product Systems"</span><span class="token-op">,</span></div>
+          <div class="code-line indent"><span class="token-str">"location"</span><span class="token-op">:</span> <span class="token-str">"Global / Remote"</span><span class="token-op">,</span></div>
+          <div class="code-line indent"><span class="token-str">"status"</span><span class="token-op">:</span> <span class="token-str">"Open to impactful collaborations"</span><span class="token-op">,</span></div>
+          <div class="code-line indent"><span class="token-str">"summary"</span><span class="token-op">:</span> <span class="token-str">"I build high-performance systems across frontend, backend, AI and realtime infrastructure."</span><span class="token-op">,</span></div>
+          <div class="code-line indent"><span class="token-str">"server_date"</span><span class="token-op">:</span> <span class="token-str">"</span><span id="ownerDate" class="token-str">--</span><span class="token-str">"</span><span class="token-op">,</span></div>
+          <div class="code-line indent"><span class="token-str">"server_time"</span><span class="token-op">:</span> <span class="token-str">"</span><span id="ownerTime" class="token-str">--:--:--</span><span class="token-str">"</span></div>
+          <div class="code-line"><span class="token-key">}</span></div>
+          <div class="code-line"><span class="token-key">if</span> <span class="token-name">__name__</span> <span class="token-op">==</span> <span class="token-str">"__main__"</span><span class="token-op">:</span></div>
+          <div class="code-line indent"><span class="token-fn">print</span><span class="token-op">(</span><span class="token-str">"whoami:"</span><span class="token-op">,</span> <span class="token-str">"newton"</span><span class="token-op">)</span></div>
+          <div class="code-line indent"><span class="token-fn">print</span><span class="token-op">(</span><span class="token-str">"stack:"</span><span class="token-op">,</span> <span class="token-str">"js ts node ai websockets"</span><span class="token-op">)</span></div>
+          <div class="code-line indent"><span class="token-fn">print</span><span class="token-op">(</span><span class="token-str">"mode:"</span><span class="token-op">,</span> <span class="token-str">"building durable systems"</span><span class="token-op">)</span></div>
+        </article>
+      </div>
+      <span class="window-resize" aria-hidden="true"></span>
+    </section>
+
     <section class="os-window" data-window="projects" data-w="660" data-h="520">
       <header class="window-head">
         <strong>Projects Vault</strong>
@@ -119,6 +149,8 @@
           <div>Global visitors: <b id="pulseVisitors">0</b></div>
           <div>Neural activity: <b id="pulseActivity">listening…</b></div>
           <div>Archive sync: <b id="pulseSynced">pending</b></div>
+          <div>Server date: <b id="pulseDate">--</b></div>
+          <div>Server time: <b id="pulseTime">--:--:--</b></div>
         </div>
         <div class="world-map" aria-label="World map visualization">• • • live world map stream • • •</div>
       </div>
@@ -145,6 +177,12 @@
           <code id="ledgerHash" class="hash">GENESIS</code>
           <button id="resetLayoutBtn" type="button">Reset Desktop Layout</button>
         </article>
+        <article class="panel-soft stack-s">
+          <h3>Project Monitor</h3>
+          <div id="monitorSummary" class="muted">Checking project health...</div>
+          <div id="monitorList" class="monitor-list"></div>
+          <button id="monitorRefreshBtn" type="button">Refresh Monitor</button>
+        </article>
       </div>
       <span class="window-resize" aria-hidden="true"></span>
     </section>
@@ -152,6 +190,7 @@
 
   <nav class="dock" aria-label="Dock">
     <button id="startToggle" type="button">Start</button>
+    <button type="button" data-open="owner">Owner</button>
     <button type="button" data-open="projects">Projects</button>
     <button type="button" data-open="terminal">Terminal</button>
     <button type="button" data-open="assistant">AI Twin</button>
@@ -161,6 +200,7 @@
 
   <div id="startMenu" class="start-menu" popover>
     <strong>System</strong>
+    <button type="button" data-open="owner">Open Owner Profile</button>
     <button type="button" data-open="projects">Open Projects Vault</button>
     <button type="button" data-open="terminal">Open Semantic Terminal</button>
     <button type="button" data-open="assistant">Open AI Digital Twin</button>

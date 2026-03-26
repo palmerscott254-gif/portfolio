@@ -1,44 +1,34 @@
 [
   {
-    "id": "fintech-grid",
-    "name": "Pan-African Fintech Grid",
-    "desc": "Interoperable payment rails for fragmented markets.",
-    "impact": "Enabled cross-border settlement pilots and reduced transfer friction.",
-    "tags": ["growth", "automation"]
+    "id": "pie-global-furnitures",
+    "name": "PIE Global Furnitures Website",
+    "desc": "Product showcase and lead generation platform for furniture clients.",
+    "impact": "Improved brand visibility and inquiry conversion flow.",
+    "tags": ["growth", "experience"],
+    "monitorUrl": ""
   },
   {
-    "id": "medical-copilot",
-    "name": "Medical Triage Copilot",
-    "desc": "Reduced emergency triage decision latency by 41%.",
-    "impact": "Improved triage confidence and faster patient routing decisions.",
-    "tags": ["automation", "experience"]
+    "id": "cpa-academy",
+    "name": "CPA Academy Website",
+    "desc": "Education platform experience for academy programs and onboarding.",
+    "impact": "Streamlined access to learning programs and enrollment information.",
+    "tags": ["experience", "growth"],
+    "monitorUrl": ""
   },
   {
-    "id": "climate-engine",
-    "name": "Climate Signal Engine",
-    "desc": "Forecast-ready dashboard for policy and logistics teams.",
-    "impact": "Unified climate indicators with decision-ready operational alerts.",
-    "tags": ["innovation", "growth"]
+    "id": "scholsey-security-app",
+    "name": "Scholsey Security App",
+    "desc": "Security-focused application for monitoring and operational response.",
+    "impact": "Strengthened visibility and response workflows for security operations.",
+    "tags": ["automation", "innovation"],
+    "monitorUrl": ""
   },
   {
-    "id": "story-commerce",
-    "name": "Neural Story Commerce",
-    "desc": "Adaptive storytelling that increased conversion quality.",
-    "impact": "Lifted qualified pipeline and reduced bounce for premium segments.",
-    "tags": ["experience", "innovation"]
-  },
-  {
-    "id": "ops-pulse",
-    "name": "Ops Pulse Platform",
-    "desc": "Unified observability across engineering and business units.",
-    "impact": "Faster incident detection and clearer cross-team accountability.",
-    "tags": ["automation", "growth"]
-  },
-  {
-    "id": "public-service-ux",
-    "name": "Public Service UX Stack",
-    "desc": "Modernized digital access for high-volume civic workflows.",
-    "impact": "Improved completion rates and reduced support overhead.",
-    "tags": ["experience"]
+    "id": "portfolio-monitor",
+    "name": "Portfolio Monitor",
+    "desc": "Unified dashboard to track health, latency, and status across deployed projects.",
+    "impact": "Single view of uptime signals for project fleet reliability.",
+    "tags": ["automation", "growth", "innovation"],
+    "monitorUrl": ""
   }
 ]
