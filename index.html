@@ -1,138 +1,171 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-mode="modern">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Newton — Futuristic Portfolio Systems</title>
-  <meta name="description" content="Interactive product portfolio with live analytics, CMS-fed case studies, AI assistant, and optimized immersive visuals." />
+  <title>Newton OS — Persistent Developer Portfolio</title>
+  <meta name="description" content="Persistent Digital OS portfolio with autonomous archive sync, semantic terminal, AI twin, and realtime pulse." />
   <meta name="theme-color" content="#080d1f" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/styles/main.css" />
 </head>
 <body>
   <canvas id="particle-canvas" aria-hidden="true"></canvas>
   <div id="cursor-glow" aria-hidden="true"></div>
 
-  <header class="site-header shell reveal">
+  <header class="topbar">
     <div class="brand">
-      <span class="brand-orb" aria-hidden="true"></span>
-      <strong>Newton / Durable Product Architect</strong>
+      <span class="brand-dot"></span>
+      <strong>Newton OS</strong>
+      <span class="muted">Persistent Digital Portfolio</span>
     </div>
-    <div class="header-actions">
+    <div class="topbar-actions">
+      <label class="mode-select-wrap">
+        <span class="muted">Mode</span>
+        <select id="modeSelect">
+          <option value="legacy">Legacy</option>
+          <option value="modern">Modern</option>
+          <option value="spatial">Spatial</option>
+        </select>
+      </label>
       <button id="themeToggle" type="button">Theme</button>
-      <button id="commandToggle" type="button">⌘ Palette</button>
+      <div class="health-pill">Health: <b id="systemHealth">checking…</b></div>
+      <div class="health-pill">Events: <b id="eventsTotal">0</b></div>
     </div>
   </header>
 
-  <main class="shell stack-xl" id="appRoot">
-    <section class="hero panel reveal" id="hero">
-      <div class="hero-content stack-m">
-        <p class="chip">Creative Engineering × Product Strategy × AI Systems</p>
-        <h1>Built to feel futuristic today and still credible decades from now.</h1>
-        <p class="lead">This portfolio is a real interactive product: backend-driven case studies, AI-guided project selection, measurable interactions, and progressive visual depth that adapts to device performance.</p>
-        <div class="hero-actions">
-          <a href="#projects" class="btn">Explore Work</a>
-          <a href="#contact" class="btn btn-ghost">Start a Build</a>
+  <main id="desktop" class="desktop" aria-label="Desktop workspace">
+    <section class="os-window" data-window="projects" data-w="660" data-h="520">
+      <header class="window-head">
+        <strong>Projects Vault</strong>
+        <div class="window-actions">
+          <button type="button" data-action="minimize">_</button>
+          <button type="button" data-action="close">×</button>
         </div>
-        <div class="metric-grid">
-          <article class="metric"><b data-kpi="0" data-target="99">0%</b><span>Delivery reliability</span></article>
-          <article class="metric"><b data-kpi="1" data-target="86">0%</b><span>Execution velocity</span></article>
-          <article class="metric"><b data-kpi="2" data-target="78">0%</b><span>UX sentiment uplift</span></article>
-          <article class="metric"><b data-kpi="3" data-target="64">0%</b><span>Carbon-aware ops</span></article>
-        </div>
-      </div>
-      <aside class="hero-console panel-soft stack-s reveal-delay" id="threeMount">
-        <div><span class="prompt">$</span> systems.status --operator="newton"</div>
-        <div class="subtle">Local time: <strong id="localClock">--:--:--</strong></div>
-        <div class="subtle">Availability: <strong id="availability">checking…</strong></div>
-        <div class="subtle">Backend: <strong id="apiHealth">checking…</strong></div>
-        <div class="subtle">Tracked events: <strong id="eventsTotal">0</strong></div>
-      </aside>
-    </section>
-
-    <section id="projects" class="panel stack-m reveal">
-      <div class="section-head">
-        <h2>Case Studies</h2>
-        <p class="subtle">Source: <strong id="projectSource">seed</strong></p>
-      </div>
-      <div id="filterBar" class="row-wrap"></div>
-      <div id="projectGrid" class="project-grid"></div>
-    </section>
-
-    <section class="split-grid">
-      <article class="panel stack-m reveal" id="advisor">
-        <h2>Strategic Advisor</h2>
-        <p class="subtle">Pick your goal and get a curated sequence through the portfolio.</p>
-        <label for="goalSelect">Current objective</label>
-        <select id="goalSelect">
-          <option value="growth">Growth and expansion</option>
-          <option value="automation">Automation and cost reduction</option>
-          <option value="experience">Premium user experience</option>
-          <option value="innovation">High-risk innovation</option>
-        </select>
-        <button id="runAdvisor" type="button" class="btn">Generate Route</button>
-        <p id="advisorOutput" class="panel-soft">Your route appears here.</p>
-      </article>
-
-      <article class="panel stack-m reveal" id="horizon">
-        <h2>100-Year Horizon</h2>
-        <p class="subtle">Simulate how today’s architecture decisions age over a century.</p>
-        <div class="row-between subtle"><span>2026</span><strong id="horizonYear">2038</strong><span>2126</span></div>
-        <input id="horizonRange" type="range" min="2026" max="2126" value="2038" step="1" />
-        <p id="horizonInsight" class="panel-soft"></p>
-      </article>
-    </section>
-
-    <section class="split-grid" id="assistant">
-      <article class="panel stack-m reveal">
-        <h2>AI Case-Study Assistant</h2>
-        <p class="subtle">Grounded responses from your real projects via backend `/api/chat`.</p>
-        <div id="chatLog" class="chat-log" aria-live="polite"></div>
-        <div class="row-gap">
-          <input id="assistantInput" placeholder="What should I show a hospital CTO focused on automation?" />
-          <button id="assistantSend" class="btn" type="button">Ask Assistant</button>
-        </div>
-      </article>
-
-      <article class="panel stack-m reveal" id="contact">
-        <h2>Engagement Intake</h2>
-        <p class="subtle">Capture priorities quickly and route into a structured outreach message.</p>
-        <form id="contactForm" class="stack-s">
-          <label for="name">Name</label>
-          <input id="name" name="name" required />
-          <label for="email">Email</label>
-          <input id="email" name="email" type="email" required />
-          <label for="scope">Scope</label>
-          <textarea id="scope" name="scope" placeholder="Goals, constraints, timeline"></textarea>
-          <div class="row-wrap">
-            <button type="submit" class="btn">Compose Email</button>
-            <button id="vcardBtn" type="button" class="btn btn-ghost">Download vCard</button>
-            <button id="copyState" type="button" class="btn btn-ghost">Copy Snapshot</button>
+      </header>
+      <div class="window-body">
+        <div id="projectFilterBar" class="row-wrap"></div>
+        <div id="projectGrid" class="project-grid"></div>
+        <article class="project-detail panel-soft">
+          <h3 id="projectTitle">Select a project</h3>
+          <p id="projectDesc" class="muted">Deep dive details appear here.</p>
+          <div class="tab-row">
+            <button type="button" data-tab="design" class="is-active">System Design</button>
+            <button type="button" data-tab="perf">Performance Metrics</button>
+            <button type="button" data-tab="forensic">Forensic Cache</button>
           </div>
-        </form>
-      </article>
+          <div class="project-tab" data-panel="design">
+            <pre id="projectMermaid" class="code-block"></pre>
+          </div>
+          <div class="project-tab" data-panel="perf" hidden>
+            <div id="projectPerf" class="stack-s"></div>
+          </div>
+          <div class="project-tab" data-panel="forensic" hidden>
+            <p id="projectForensic" class="muted"></p>
+          </div>
+        </article>
+      </div>
+      <span class="window-resize" aria-hidden="true"></span>
     </section>
 
-    <footer class="site-footer subtle reveal">
-      <span>© <span id="year"></span> Newton. Crafted for long-horizon relevance.</span>
-      <span>Shortcut: Ctrl/Cmd + K</span>
-    </footer>
+    <section class="os-window" data-window="terminal" data-w="560" data-h="390">
+      <header class="window-head">
+        <strong>Semantic Terminal</strong>
+        <div class="window-actions">
+          <button type="button" data-action="minimize">_</button>
+          <button type="button" data-action="close">×</button>
+        </div>
+      </header>
+      <div class="window-body terminal-body">
+        <div id="terminalOutput" class="terminal-output"></div>
+        <form id="terminalForm" class="terminal-form">
+          <span>$</span>
+          <input id="terminalInput" autocomplete="off" placeholder="help | ls | cd projects | find me high-performance apps" />
+        </form>
+      </div>
+      <span class="window-resize" aria-hidden="true"></span>
+    </section>
+
+    <section class="os-window" data-window="assistant" data-w="520" data-h="420">
+      <header class="window-head">
+        <strong>AI Digital Twin</strong>
+        <div class="window-actions">
+          <button type="button" data-action="minimize">_</button>
+          <button type="button" data-action="close">×</button>
+        </div>
+      </header>
+      <div class="window-body stack-s">
+        <div id="assistantLog" class="chat-log" aria-live="polite"></div>
+        <div class="row-gap">
+          <input id="assistantInput" placeholder="How would this dev handle a scaling crisis?" />
+          <button id="assistantSend" type="button">Ask</button>
+        </div>
+      </div>
+      <span class="window-resize" aria-hidden="true"></span>
+    </section>
+
+    <section class="os-window" data-window="pulse" data-w="420" data-h="320">
+      <header class="window-head">
+        <strong>Realtime Pulse</strong>
+        <div class="window-actions">
+          <button type="button" data-action="minimize">_</button>
+          <button type="button" data-action="close">×</button>
+        </div>
+      </header>
+      <div class="window-body stack-s">
+        <div class="panel-soft">
+          <div>Global visitors: <b id="pulseVisitors">0</b></div>
+          <div>Neural activity: <b id="pulseActivity">listening…</b></div>
+          <div>Archive sync: <b id="pulseSynced">pending</b></div>
+        </div>
+        <div class="world-map" aria-label="World map visualization">• • • live world map stream • • •</div>
+      </div>
+      <span class="window-resize" aria-hidden="true"></span>
+    </section>
+
+    <section class="os-window" data-window="settings" data-w="420" data-h="350">
+      <header class="window-head">
+        <strong>System Settings</strong>
+        <div class="window-actions">
+          <button type="button" data-action="minimize">_</button>
+          <button type="button" data-action="close">×</button>
+        </div>
+      </header>
+      <div class="window-body stack-s">
+        <article class="panel-soft stack-s">
+          <h3>Living Archive</h3>
+          <div id="archiveSummary" class="stack-s muted">Loading archive…</div>
+          <button id="archiveSyncBtn" type="button">Sync Archive Now</button>
+        </article>
+        <article class="panel-soft stack-s">
+          <h3>Proof of Human</h3>
+          <div>Latest ledger hash:</div>
+          <code id="ledgerHash" class="hash">GENESIS</code>
+        </article>
+      </div>
+      <span class="window-resize" aria-hidden="true"></span>
+    </section>
   </main>
 
-  <dialog id="palette" aria-label="Command palette">
-    <form method="dialog" class="stack-s">
-      <strong>Command Palette</strong>
-      <input id="commandInput" placeholder="projects, advisor, horizon, assistant, contact" />
-      <button type="button" class="palette-item" data-cmd="projects">Open Case Studies</button>
-      <button type="button" class="palette-item" data-cmd="advisor">Run Strategic Advisor</button>
-      <button type="button" class="palette-item" data-cmd="horizon">Open Horizon Simulator</button>
-      <button type="button" class="palette-item" data-cmd="assistant">Focus AI Assistant</button>
-      <button type="button" class="palette-item" data-cmd="contact">Open Intake Form</button>
-      <button type="submit" class="btn">Close</button>
-    </form>
-  </dialog>
+  <nav class="dock" aria-label="Dock">
+    <button id="startToggle" type="button">Start</button>
+    <button type="button" data-open="projects">Projects</button>
+    <button type="button" data-open="terminal">Terminal</button>
+    <button type="button" data-open="assistant">AI Twin</button>
+    <button type="button" data-open="pulse">Pulse</button>
+    <button type="button" data-open="settings">Settings</button>
+  </nav>
+
+  <div id="startMenu" class="start-menu" popover>
+    <strong>System</strong>
+    <button type="button" data-open="projects">Open Projects Vault</button>
+    <button type="button" data-open="terminal">Open Semantic Terminal</button>
+    <button type="button" data-open="assistant">Open AI Digital Twin</button>
+    <button type="button" data-open="pulse">Open Pulse Monitor</button>
+    <button type="button" data-open="settings">Open Settings / Health</button>
+  </div>
 
   <script type="module" src="/src/js/main.js"></script>
 </body>

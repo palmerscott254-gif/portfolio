@@ -60,3 +60,27 @@ export const ADVISOR_ROUTES = {
   experience: "Start with Neural Story Commerce → Public Service UX Stack → Medical Triage Copilot.",
   innovation: "Start with Climate Signal Engine → Neural Story Commerce → Architecture Lab workshop."
 };
+
+export const TERMINAL_HELP = [
+  "help — list commands",
+  "ls — list apps",
+  "cd projects|assistant|pulse|settings — change context",
+  "open projects|assistant|pulse|settings|terminal — focus app",
+  "find me <query> — semantic project filter",
+  "clear — clear terminal history"
+];
+
+export const PROJECT_DEEP_DIVES = {
+  default: {
+    mermaid: "graph TD\nClient[Web Client] --> API[API Gateway]\nAPI --> SVC[Domain Services]\nSVC --> DB[(Data Store)]\nSVC --> OBS[(Observability)]",
+    perf: {
+      lighthouse: 92,
+      p95LatencyMs: 220,
+      availability: "99.95%"
+    },
+    forensic: {
+      available: true,
+      note: "Cached forensic replay is archived locally to mitigate link rot."
+    }
+  }
+};

@@ -1,32 +1,86 @@
-import { FALLBACK_PROJECTS, HORIZON_EVENTS, ADVISOR_ROUTES } from "./constants.js";
-import { getHealth, getProjects, getAnalyticsSummary, trackEvent } from "./api/client.js";
+import {
+  FALLBACK_PROJECTS,
+  FILTERS,
+  PROJECT_DEEP_DIVES,
+  TERMINAL_HELP
+} from "./constants.js";
+import {
+  getHealth,
+  getProjects,
+  getAnalyticsSummary,
+  trackEvent,
+  askAssistant,
+  getArchiveStatus,
+  syncArchiveNow,
+  getLedger
+} from "./api/client.js";
 import { store, setState } from "./state/store.js";
 import { renderFilterBar, renderProjectGrid } from "./components/projects.js";
-import { initCommandPalette } from "./components/palette.js";
-import { initReveal } from "./effects/reveal.js";
-import { initTilt } from "./effects/tilt.js";
 import { initCursorGlow } from "./effects/cursor.js";
 import { initParticleCanvas } from "./effects/particles.js";
 
 const root = document.documentElement;
-const year = document.getElementById("year");
-const localClock = document.getElementById("localClock");
-const availability = document.getElementById("availability");
-const apiHealth = document.getElementById("apiHealth");
-const eventsTotal = document.getElementById("eventsTotal");
-const projectSource = document.getElementById("projectSource");
-const filterBar = document.getElementById("filterBar");
+const desktop = document.getElementById("desktop");
+const startMenu = document.getElementById("startMenu");
+const startToggle = document.getElementById("startToggle");
+const modeSelect = document.getElementById("modeSelect");
+const themeToggle = document.getElementById("themeToggle");
+const systemHealth = document.getElementById("systemHealth");
+const projectFilterBar = document.getElementById("projectFilterBar");
 const projectGrid = document.getElementById("projectGrid");
-const goalSelect = document.getElementById("goalSelect");
-const advisorOutput = document.getElementById("advisorOutput");
-const runAdvisor = document.getElementById("runAdvisor");
-const horizonRange = document.getElementById("horizonRange");
-const horizonYear = document.getElementById("horizonYear");
-const horizonInsight = document.getElementById("horizonInsight");
+const projectTitle = document.getElementById("projectTitle");
+const projectDesc = document.getElementById("projectDesc");
+const projectMermaid = document.getElementById("projectMermaid");
+const projectPerf = document.getElementById("projectPerf");
+const projectForensic = document.getElementById("projectForensic");
+const archiveSummary = document.getElementById("archiveSummary");
+const archiveSyncBtn = document.getElementById("archiveSyncBtn");
+const ledgerHash = document.getElementById("ledgerHash");
+const pulseVisitors = document.getElementById("pulseVisitors");
+const pulseActivity = document.getElementById("pulseActivity");
+const pulseSynced = document.getElementById("pulseSynced");
+const terminalOutput = document.getElementById("terminalOutput");
+const terminalForm = document.getElementById("terminalForm");
+const terminalInput = document.getElementById("terminalInput");
+const assistantLog = document.getElementById("assistantLog");
+const assistantInput = document.getElementById("assistantInput");
+const assistantSend = document.getElementById("assistantSend");
+const eventsTotal = document.getElementById("eventsTotal");
 
-function nearestHorizonYear(value) {
-  const years = Object.keys(HORIZON_EVENTS).map(Number);
-  return years.reduce((prev, curr) => (Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev));
+function saveLayout() {
+  localStorage.setItem("desktop.layout", JSON.stringify(store.windows));
+}
+
+function loadLayout() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem("desktop.layout") || "{}");
+    if (parsed && typeof parsed === "object") {
+      setState({ windows: parsed });
+    }
+  } catch {
+  }
+}
+
+function saveTerminalHistory() {
+  localStorage.setItem("terminal.history", JSON.stringify(store.terminalHistory.slice(-200)));
+}
+
+function loadTerminalHistory() {
+  try {
+    const history = JSON.parse(localStorage.getItem("terminal.history") || "[]");
+    if (Array.isArray(history)) {
+      setState({ terminalHistory: history.slice(-200) });
+    }
+  } catch {
+  }
+}
+
+function detectMode() {
+  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+  const lowPower = (navigator.hardwareConcurrency || 4) <= 4 || (navigator.deviceMemory || 4) <= 4;
+  if (reduced || lowPower) return "legacy";
+  if ("xr" in navigator) return "spatial";
+  return "modern";
 }
 
 function applyTheme(theme) {
@@ -36,55 +90,198 @@ function applyTheme(theme) {
 }
 
 function setupTheme() {
-  const saved = localStorage.getItem("theme");
-  if (saved) {
-    applyTheme(saved);
-  } else {
-    const hour = new Date().getHours();
-    applyTheme(hour >= 7 && hour <= 18 ? "light" : "dark");
-  }
-
-  document.getElementById("themeToggle").addEventListener("click", async () => {
-    const current = root.getAttribute("data-theme") || "dark";
-    const next = current === "dark" ? "light" : "dark";
+  const saved = localStorage.getItem("theme") || "dark";
+  applyTheme(saved);
+  themeToggle.addEventListener("click", async () => {
+    const next = store.theme === "dark" ? "light" : "dark";
     applyTheme(next);
     await trackEvent("theme_toggle", { next });
   });
 }
 
-function setupClock() {
-  function tick() {
-    const now = new Date();
-    localClock.textContent = now.toLocaleTimeString();
-    const hour = now.getHours();
-    const online = hour >= 7 && hour <= 20;
-    availability.textContent = online ? "online" : "async-mode";
-    availability.style.color = online ? "var(--ok)" : "var(--warn)";
-  }
-  tick();
-  setInterval(tick, 1000);
+function applyMode(mode) {
+  root.setAttribute("data-mode", mode);
+  modeSelect.value = mode;
+  setState({ mode });
+  localStorage.setItem("system.mode", mode);
 }
 
-function animateKpis() {
-  const counters = document.querySelectorAll("[data-kpi]");
-  counters.forEach((node) => {
-    const target = Number(node.getAttribute("data-target") || 0);
-    let value = 0;
-    const step = Math.max(1, Math.floor(target / 36));
-    const id = setInterval(() => {
-      value += step;
-      if (value >= target) {
-        value = target;
-        clearInterval(id);
-      }
-      node.textContent = `${value}%`;
-    }, 24);
+function setupMode() {
+  const saved = localStorage.getItem("system.mode") || detectMode();
+  applyMode(saved);
+  modeSelect.addEventListener("change", async () => {
+    applyMode(modeSelect.value);
+    await trackEvent("mode_change", { mode: modeSelect.value });
+  });
+}
+
+function setWindowState(id, patch) {
+  const current = store.windows[id] || {};
+  const next = { ...current, ...patch };
+  const windows = { ...store.windows, [id]: next };
+  setState({ windows });
+  saveLayout();
+}
+
+function focusWindow(id) {
+  const zCounter = store.zCounter + 1;
+  setState({ zCounter });
+  setWindowState(id, { z: zCounter, minimized: false });
+  const node = desktop.querySelector(`.os-window[data-window='${id}']`);
+  if (node) node.style.zIndex = String(zCounter);
+}
+
+function initWindowManager() {
+  const windows = [...desktop.querySelectorAll(".os-window")];
+
+  windows.forEach((windowEl, index) => {
+    const id = windowEl.dataset.window;
+    const header = windowEl.querySelector(".window-head");
+    const resizeHandle = windowEl.querySelector(".window-resize");
+    const minimizeBtn = windowEl.querySelector("[data-action='minimize']");
+    const closeBtn = windowEl.querySelector("[data-action='close']");
+
+    const saved = store.windows[id] || {};
+    const startX = saved.x ?? (60 + index * 30);
+    const startY = saved.y ?? (80 + index * 24);
+    const startW = saved.w ?? Number(windowEl.dataset.w || 500);
+    const startH = saved.h ?? Number(windowEl.dataset.h || 340);
+    const startZ = saved.z ?? (10 + index);
+
+    Object.assign(windowEl.style, {
+      left: `${startX}px`,
+      top: `${startY}px`,
+      width: `${startW}px`,
+      height: `${startH}px`,
+      zIndex: String(startZ),
+      display: saved.minimized ? "none" : "grid"
+    });
+
+    setWindowState(id, { x: startX, y: startY, w: startW, h: startH, z: startZ, minimized: Boolean(saved.minimized) });
+
+    let drag = null;
+    header.addEventListener("pointerdown", (event) => {
+      focusWindow(id);
+      drag = {
+        sx: event.clientX,
+        sy: event.clientY,
+        x: windowEl.offsetLeft,
+        y: windowEl.offsetTop
+      };
+      header.setPointerCapture(event.pointerId);
+    });
+
+    header.addEventListener("pointermove", (event) => {
+      if (!drag) return;
+      const nx = Math.max(8, drag.x + (event.clientX - drag.sx));
+      const ny = Math.max(44, drag.y + (event.clientY - drag.sy));
+      windowEl.style.left = `${nx}px`;
+      windowEl.style.top = `${ny}px`;
+    });
+
+    header.addEventListener("pointerup", () => {
+      if (!drag) return;
+      setWindowState(id, { x: windowEl.offsetLeft, y: windowEl.offsetTop });
+      drag = null;
+    });
+
+    let resize = null;
+    resizeHandle?.addEventListener("pointerdown", (event) => {
+      focusWindow(id);
+      resize = {
+        sx: event.clientX,
+        sy: event.clientY,
+        w: windowEl.offsetWidth,
+        h: windowEl.offsetHeight
+      };
+      resizeHandle.setPointerCapture(event.pointerId);
+    });
+
+    resizeHandle?.addEventListener("pointermove", (event) => {
+      if (!resize) return;
+      const nw = Math.max(320, resize.w + (event.clientX - resize.sx));
+      const nh = Math.max(220, resize.h + (event.clientY - resize.sy));
+      windowEl.style.width = `${nw}px`;
+      windowEl.style.height = `${nh}px`;
+    });
+
+    resizeHandle?.addEventListener("pointerup", () => {
+      if (!resize) return;
+      setWindowState(id, { w: windowEl.offsetWidth, h: windowEl.offsetHeight });
+      resize = null;
+    });
+
+    windowEl.addEventListener("pointerdown", () => focusWindow(id));
+
+    minimizeBtn?.addEventListener("click", async () => {
+      windowEl.style.display = "none";
+      setWindowState(id, { minimized: true });
+      await trackEvent("window_minimize", { id });
+    });
+
+    closeBtn?.addEventListener("click", async () => {
+      windowEl.style.display = "none";
+      setWindowState(id, { minimized: true });
+      await trackEvent("window_close", { id });
+    });
+  });
+}
+
+function openWindow(id) {
+  const node = desktop.querySelector(`.os-window[data-window='${id}']`);
+  if (!node) return;
+  node.style.display = "grid";
+  focusWindow(id);
+  setWindowState(id, { minimized: false });
+}
+
+function setupLaunchers() {
+  document.querySelectorAll("[data-open]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.open;
+      openWindow(id);
+      if (startMenu.matches(":popover-open")) startMenu.hidePopover();
+    });
+  });
+
+  startToggle.addEventListener("click", () => {
+    if (startMenu.matches(":popover-open")) startMenu.hidePopover();
+    else startMenu.showPopover();
+  });
+}
+
+function renderProjectDetails(project) {
+  if (!project) return;
+  const deep = PROJECT_DEEP_DIVES[project.id] || PROJECT_DEEP_DIVES.default;
+
+  projectTitle.textContent = project.name;
+  projectDesc.textContent = `${project.desc} Impact: ${project.impact || "TBD"}`;
+  projectMermaid.textContent = deep.mermaid;
+  projectPerf.innerHTML = `
+    <div>Lighthouse: <b>${deep.perf.lighthouse}</b></div>
+    <div>P95 latency: <b>${deep.perf.p95LatencyMs}ms</b></div>
+    <div>Availability: <b>${deep.perf.availability}</b></div>
+  `;
+  projectForensic.textContent = deep.forensic.note;
+}
+
+function setupProjectTabs() {
+  document.querySelectorAll("[data-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const tab = button.dataset.tab;
+      document.querySelectorAll(".project-tab").forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== tab;
+      });
+      document.querySelectorAll("[data-tab]").forEach((btn) => {
+        btn.classList.toggle("is-active", btn === button);
+      });
+    });
   });
 }
 
 function renderProjects() {
   renderFilterBar({
-    filterBar,
+    filterBar: projectFilterBar,
     activeFilter: store.activeFilter,
     onFilterChange: async (activeFilter) => {
       setState({ activeFilter });
@@ -96,184 +293,255 @@ function renderProjects() {
   renderProjectGrid({
     projectGrid,
     projects: store.projects,
-    activeFilter: store.activeFilter
+    activeFilter: store.activeFilter,
+    onOpenProject: (project) => {
+      openWindow("projects");
+      renderProjectDetails(project);
+      trackEvent("project_open", { project: project.id });
+    }
   });
 
-  initTilt();
+  const visible = store.activeFilter === "all"
+    ? store.projects
+    : store.projects.filter((project) => project.tags.includes(store.activeFilter));
+  renderProjectDetails(visible[0] || store.projects[0]);
 }
 
 async function loadProjects() {
   try {
     const payload = await getProjects();
     setState({ projects: payload.projects?.length ? payload.projects : FALLBACK_PROJECTS });
-    projectSource.textContent = payload.source || "seed";
-    await trackEvent("projects_loaded", { source: payload.source || "seed" });
   } catch {
     setState({ projects: FALLBACK_PROJECTS });
-    projectSource.textContent = "seed";
   }
   renderProjects();
 }
 
-async function updateAnalyticsSummary() {
+function terminalPrint(text) {
+  const line = document.createElement("div");
+  line.className = "term-line";
+  line.textContent = text;
+  terminalOutput.appendChild(line);
+  terminalOutput.scrollTop = terminalOutput.scrollHeight;
+}
+
+function semanticFilter(input) {
+  const query = input.toLowerCase();
+  const candidate = FILTERS.find((item) => item !== "all" && query.includes(item));
+  if (!candidate) return false;
+  setState({ activeFilter: candidate });
+  renderProjects();
+  terminalPrint(`Applied filter: ${candidate}`);
+  openWindow("projects");
+  return true;
+}
+
+function runTerminal(command) {
+  const value = command.trim();
+  if (!value) return;
+
+  terminalPrint(`$ ${value}`);
+  const nextHistory = [...store.terminalHistory, value].slice(-200);
+  setState({ terminalHistory: nextHistory });
+  saveTerminalHistory();
+
+  const parts = value.split(/\s+/);
+  const [cmd, ...rest] = parts;
+
+  if (/^find\s+me\s+/i.test(value)) {
+    const handled = semanticFilter(value);
+    if (!handled) terminalPrint("No semantic filter matched. Try 'find me automation apps'.");
+    return;
+  }
+
+  if (cmd === "help") {
+    TERMINAL_HELP.forEach((line) => terminalPrint(line));
+    return;
+  }
+
+  if (cmd === "ls") {
+    terminalPrint("projects assistant pulse settings terminal");
+    return;
+  }
+
+  if (cmd === "cd") {
+    const target = (rest[0] || "/").replace(/^\/+/, "");
+    if (!target) {
+      setState({ terminalPath: "/" });
+      terminalPrint("Changed directory to /");
+      return;
+    }
+    if (["projects", "assistant", "pulse", "settings"].includes(target)) {
+      setState({ terminalPath: `/${target}` });
+      terminalPrint(`Changed directory to /${target}`);
+      return;
+    }
+    terminalPrint(`cd: no such app: ${target}`);
+    return;
+  }
+
+  if (cmd === "open") {
+    const target = rest[0];
+    if (!target) {
+      terminalPrint("open: missing app name");
+      return;
+    }
+    openWindow(target);
+    terminalPrint(`Opened ${target}`);
+    return;
+  }
+
+  if (cmd === "clear") {
+    terminalOutput.innerHTML = "";
+    setState({ terminalHistory: [] });
+    saveTerminalHistory();
+    return;
+  }
+
+  terminalPrint(`Unknown command: ${cmd}. Run 'help'.`);
+}
+
+function setupTerminal() {
+  terminalPrint("Persistent Digital OS terminal online. Run 'help'.");
+  store.terminalHistory.slice(-8).forEach((entry) => terminalPrint(`history: ${entry}`));
+
+  terminalForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const cmd = terminalInput.value;
+    terminalInput.value = "";
+    runTerminal(cmd);
+    await trackEvent("terminal_command", { cmd: cmd.slice(0, 80) });
+  });
+}
+
+function addAssistantMessage(role, text) {
+  const node = document.createElement("div");
+  node.className = `msg ${role}`;
+  node.textContent = text;
+  assistantLog.appendChild(node);
+  assistantLog.scrollTop = assistantLog.scrollHeight;
+}
+
+function setupAssistant() {
+  addAssistantMessage("assistant", "Digital Twin ready. Ask about architecture, scale, or project fit.");
+
+  const run = async () => {
+    const message = assistantInput.value.trim();
+    if (!message) return;
+    assistantInput.value = "";
+    addAssistantMessage("user", message);
+
+    assistantSend.disabled = true;
+    try {
+      const payload = await askAssistant(message, store.activeFilter);
+      addAssistantMessage("assistant", payload.reply || "No response generated.");
+      await trackEvent("assistant_asked", { chars: message.length });
+    } catch {
+      addAssistantMessage("assistant", "Assistant unavailable. Verify backend/API keys.");
+    } finally {
+      assistantSend.disabled = false;
+    }
+  };
+
+  assistantSend.addEventListener("click", run);
+  assistantInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      run();
+    }
+  });
+}
+
+function setupPulse() {
+  try {
+    const protocol = location.protocol === "https:" ? "wss" : "ws";
+    const socket = new WebSocket(`${protocol}://${location.host}/ws/pulse`);
+    socket.addEventListener("message", (event) => {
+      const payload = JSON.parse(event.data || "{}");
+      if (payload.type !== "pulse") return;
+      const data = payload.data || {};
+      pulseVisitors.textContent = String(data.visitors ?? 0);
+      pulseActivity.textContent = data.neuralActivity || "No activity";
+      pulseSynced.textContent = data.archiveLastSync
+        ? new Date(data.archiveLastSync).toLocaleTimeString()
+        : "pending";
+    });
+  } catch {
+    pulseActivity.textContent = "Realtime channel unavailable";
+  }
+}
+
+async function loadHealth() {
+  try {
+    const health = await getHealth();
+    systemHealth.textContent = `online (${health.service})`;
+  } catch {
+    systemHealth.textContent = "offline";
+  }
+}
+
+async function loadAnalytics() {
   const summary = await getAnalyticsSummary();
   setState({ analyticsSummary: summary });
   eventsTotal.textContent = String(summary.totalEvents || 0);
 }
 
-async function checkHealth() {
+function renderArchiveSummary(state) {
+  archiveSummary.innerHTML = `
+    <div>Source: <b>${state.source}</b></div>
+    <div>Years experience: <b>${state.yearsExperience}</b></div>
+    <div>GitHub repos: <b>${state.github?.publicRepos ?? 0}</b></div>
+    <div>Total stars: <b>${state.github?.stars ?? 0}</b></div>
+  `;
+}
+
+async function loadArchive() {
   try {
-    const payload = await getHealth();
-    apiHealth.textContent = `online (${payload.service})`;
-    apiHealth.style.color = "var(--ok)";
+    const status = await getArchiveStatus();
+    setState({ archiveStatus: status });
+    renderArchiveSummary(status);
   } catch {
-    apiHealth.textContent = "offline";
-    apiHealth.style.color = "var(--warn)";
+    archiveSummary.textContent = "Archive unavailable.";
   }
-}
 
-function setupAdvisor() {
-  const run = async () => {
-    const goal = goalSelect.value;
-    advisorOutput.textContent = ADVISOR_ROUTES[goal];
-    await trackEvent("advisor_run", { goal });
-    await updateAnalyticsSummary();
-  };
-
-  runAdvisor.addEventListener("click", run);
-  return run;
-}
-
-function setupHorizon() {
-  const render = () => {
-    const yearValue = Number(horizonRange.value);
-    const nearest = nearestHorizonYear(yearValue);
-    horizonYear.textContent = String(yearValue);
-    horizonInsight.textContent = HORIZON_EVENTS[nearest];
-  };
-
-  horizonRange.addEventListener("input", render);
-  horizonRange.addEventListener("change", async () => {
-    await trackEvent("horizon_change", { year: Number(horizonRange.value) });
-    await updateAnalyticsSummary();
-  });
-
-  render();
-}
-
-function setupForms() {
-  const form = document.getElementById("contactForm");
-  const copyState = document.getElementById("copyState");
-  const vcardBtn = document.getElementById("vcardBtn");
-
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const scope = document.getElementById("scope").value.trim();
-    const subject = `Project Inquiry from ${name}`;
-    const body = `Name: ${name}\nEmail: ${email}\n\nScope:\n${scope}`;
-    window.location.href = `mailto:hello@newton.build?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    await trackEvent("contact_mailto", { hasScope: Boolean(scope) });
-    await updateAnalyticsSummary();
-  });
-
-  copyState.addEventListener("click", async () => {
-    const snapshot = {
-      at: new Date().toISOString(),
-      theme: store.theme,
-      filter: store.activeFilter,
-      projects: store.projects.length,
-      horizonYear: Number(horizonRange.value)
-    };
-
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(snapshot, null, 2));
-      await trackEvent("snapshot_copy");
-      await updateAnalyticsSummary();
-      alert("Snapshot copied.");
-    } catch {
-      alert("Clipboard unavailable.");
-    }
-  });
-
-  vcardBtn.addEventListener("click", async () => {
-    const card = [
-      "BEGIN:VCARD",
-      "VERSION:3.0",
-      "FN:Newton",
-      "TITLE:Product Designer & Full-Stack Developer",
-      "EMAIL:hello@newton.build",
-      "URL:https://portfolio.newton.build",
-      "NOTE:Futuristic, measurable, durable digital systems.",
-      "END:VCARD"
-    ].join("\n");
-
-    const blob = new Blob([card], { type: "text/vcard;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "newton-contact.vcf";
-    link.click();
-    URL.revokeObjectURL(link.href);
-
-    await trackEvent("vcard_download");
-    await updateAnalyticsSummary();
-  });
-}
-
-async function lazyInitAssistant() {
-  const section = document.getElementById("assistant");
-  let loaded = false;
-
-  const observer = new IntersectionObserver(async (entries) => {
-    const entry = entries[0];
-    if (!entry?.isIntersecting || loaded) return;
-    loaded = true;
-    observer.disconnect();
-    const { initAssistant } = await import("./components/assistant.js");
-    initAssistant();
-  }, { threshold: 0.2 });
-
-  observer.observe(section);
-}
-
-async function initThreeWhenIdle() {
-  const run = async () => {
-    try {
-      const { initThreeHero } = await import("./effects/three-hero.js");
-      await initThreeHero("threeMount");
-    } catch {
-    }
-  };
-
-  if ("requestIdleCallback" in window) {
-    requestIdleCallback(run, { timeout: 1800 });
-  } else {
-    setTimeout(run, 900);
+  try {
+    const ledger = await getLedger(1);
+    ledgerHash.textContent = ledger.latestHash || "GENESIS";
+  } catch {
+    ledgerHash.textContent = "N/A";
   }
+
+  archiveSyncBtn.addEventListener("click", async () => {
+    archiveSyncBtn.disabled = true;
+    await syncArchiveNow();
+    await loadArchive();
+    archiveSyncBtn.disabled = false;
+  });
 }
 
-function init() {
-  year.textContent = String(new Date().getFullYear());
+async function init() {
+  loadLayout();
+  loadTerminalHistory();
+
   setupTheme();
-  setupClock();
-  animateKpis();
-  setupHorizon();
-  setupForms();
-  initReveal();
+  setupMode();
+  setupLaunchers();
+  initWindowManager();
+  setupProjectTabs();
+  setupTerminal();
+  setupAssistant();
+  setupPulse();
   initCursorGlow();
   initParticleCanvas();
 
-  const runAdvisor = setupAdvisor();
-  initCommandPalette({ onRunAdvisor: runAdvisor });
+  await Promise.all([
+    loadProjects(),
+    loadHealth(),
+    loadAnalytics(),
+    loadArchive()
+  ]);
 
-  loadProjects();
-  checkHealth();
-  updateAnalyticsSummary();
-  lazyInitAssistant();
-  initThreeWhenIdle();
-
-  trackEvent("page_view", { title: document.title });
+  await trackEvent("page_view", { title: document.title });
 }
 
 init();

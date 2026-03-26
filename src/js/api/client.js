@@ -51,6 +51,18 @@ export async function getAnalyticsSummary() {
   }
 }
 
+export async function getArchiveStatus() {
+  return apiGet("/api/archive/status");
+}
+
+export async function syncArchiveNow() {
+  return apiPost("/api/archive/sync", {});
+}
+
+export async function getLedger(limit = 30) {
+  return apiGet(`/api/ledger?limit=${encodeURIComponent(String(limit))}`);
+}
+
 export async function askAssistant(message, activeFilter) {
   return apiPost("/api/chat", { message, activeFilter });
 }

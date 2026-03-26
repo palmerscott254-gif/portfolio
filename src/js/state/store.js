@@ -1,8 +1,14 @@
 export const store = {
   theme: "dark",
+  mode: "modern",
   activeFilter: "all",
   projects: [],
   analyticsSummary: { totalEvents: 0 },
+  archiveStatus: null,
+  terminalHistory: [],
+  terminalPath: "/",
+  windows: {},
+  zCounter: 20,
   subscribers: new Set()
 };
 
