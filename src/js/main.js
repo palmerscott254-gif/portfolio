@@ -47,12 +47,19 @@ const assistantLog = document.getElementById("assistantLog");
 const assistantInput = document.getElementById("assistantInput");
 const assistantSend = document.getElementById("assistantSend");
 const eventsTotal = document.getElementById("eventsTotal");
+const FULL_SITE_LAYOUT = true;
 
 function saveLayout() {
+  if (FULL_SITE_LAYOUT) return;
   localStorage.setItem("desktop.layout", JSON.stringify(store.windows));
 }
 
 function loadLayout() {
+  if (FULL_SITE_LAYOUT) {
+    setState({ windows: {} });
+    localStorage.removeItem("desktop.layout");
+    return;
+  }
   try {
     const parsed = JSON.parse(localStorage.getItem("desktop.layout") || "{}");
     if (parsed && typeof parsed === "object") {
@@ -138,6 +145,7 @@ function setWindowState(id, patch) {
 }
 
 function isCompactViewport() {
+  if (FULL_SITE_LAYOUT) return true;
   return window.matchMedia("(max-width: 1024px)").matches;
 }
 
@@ -160,6 +168,7 @@ function clampWindowToViewport(windowEl, proposed) {
 }
 
 function focusWindow(id) {
+  if (FULL_SITE_LAYOUT) return;
   const zCounter = store.zCounter + 1;
   setState({ zCounter });
   setWindowState(id, { z: zCounter, minimized: false });
@@ -184,6 +193,19 @@ function initWindowManager() {
     const startW = saved.w ?? Number(windowEl.dataset.w || 500);
     const startH = saved.h ?? Number(windowEl.dataset.h || 340);
     const startZ = saved.z ?? (10 + index);
+
+    if (FULL_SITE_LAYOUT) {
+      Object.assign(windowEl.style, {
+        left: "",
+        top: "",
+        width: "",
+        height: "",
+        zIndex: "",
+        display: "grid"
+      });
+      setWindowState(id, { minimized: false });
+      return;
+    }
 
     windowEl.style.zIndex = String(startZ);
     windowEl.style.display = saved.minimized ? "none" : "grid";
@@ -285,6 +307,7 @@ function initWindowManager() {
 }
 
 function reflowWindowsForViewport() {
+  if (FULL_SITE_LAYOUT) return;
   const compact = isCompactViewport();
   desktop.querySelectorAll(".os-window").forEach((windowEl) => {
     const id = windowEl.dataset.window;
@@ -313,6 +336,10 @@ function openWindow(id) {
   const node = desktop.querySelector(`.os-window[data-window='${id}']`);
   if (!node) return;
   node.style.display = "grid";
+  if (FULL_SITE_LAYOUT) {
+    node.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
   focusWindow(id);
   setWindowState(id, { minimized: false });
 }
@@ -636,6 +663,10 @@ async function loadArchive() {
 }
 
 async function init() {
+  if (FULL_SITE_LAYOUT) {
+    root.setAttribute("data-layout", "stacked");
+  }
+
   loadLayout();
   loadTerminalHistory();
 
