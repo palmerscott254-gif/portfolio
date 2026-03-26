@@ -3,23 +3,26 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  askTwin,
+  createMessage,
+  createMessagesSocket,
   createPulseSocket,
   getAnalyticsSummary,
   getArchiveState,
   getLedger,
+  getMessages,
   getMonitorStatus,
   getProjects,
   syncArchive,
   trackAnalytics
 } from "@/lib/api";
 import { useOsStore } from "@/lib/store/useOsStore";
+import type { ClientMessage } from "@/lib/api";
 
 type Tab = "design" | "performance" | "forensic";
 
 const terminalCatalog = {
-  help: "help, ls, cd, open, find me <query>, clear",
-  ls: "profile pulse projects terminal ai archive ledger monitor analytics",
+  help: "help, ls, cd, open, clear",
+  ls: "profile pulse projects terminal messages archive ledger monitor analytics",
   cd: "stacked-layout-only: all modules are always visible",
   open: "Use smooth scroll; modules are already mounted"
 };
@@ -36,7 +39,6 @@ export default function DigitalOSPage() {
     projects,
     terminalLines,
     terminalHistory,
-    twinMessages,
     analyticsTotal,
     setPulse,
     setMode,
@@ -45,18 +47,17 @@ export default function DigitalOSPage() {
     pushTerminal,
     pushHistory,
     clearTerminal,
-    pushTwin,
     setAnalyticsTotal
   } = useOsStore();
 
   const [tab, setTab] = useState<Tab>("design");
-  const [query, setQuery] = useState("");
   const [archive, setArchive] = useState<any>(null);
   const [ledger, setLedger] = useState<any[]>([]);
   const [monitor, setMonitor] = useState<any>(null);
   const [command, setCommand] = useState("");
-  const [chat, setChat] = useState("");
   const [autoPoll, setAutoPoll] = useState(true);
+  const [messages, setMessages] = useState<ClientMessage[]>([]);
+  const [clientForm, setClientForm] = useState({ name: "", email: "", company: "", message: "" });
   const sectionRefs = useRef<HTMLElement[]>([]);
 
   useEffect(() => {
@@ -90,17 +91,19 @@ export default function DigitalOSPage() {
 
   useEffect(() => {
     const boot = async () => {
-      const [p, a, l, m, summary] = await Promise.all([
+      const [p, a, l, m, summary, msgPayload] = await Promise.all([
         getProjects(),
         getArchiveState(),
         getLedger(),
         getMonitorStatus(),
-        getAnalyticsSummary()
+        getAnalyticsSummary(),
+        getMessages()
       ]);
       setProjects(p.projects || []);
       setArchive(a);
       setLedger(l.entries || []);
       setMonitor(m);
+      setMessages(msgPayload.messages || []);
       setAnalyticsTotal(summary.total_events || 0);
     };
     void boot();
@@ -131,8 +134,23 @@ export default function DigitalOSPage() {
     return () => clearInterval(timer);
   }, [autoPoll]);
 
+  useEffect(() => {
+    const connect = () => {
+      const ws = createMessagesSocket((incoming) => {
+        setMessages((prev) => {
+          if (prev.some((item) => item.id === incoming.id)) return prev;
+          return [...prev, incoming].slice(-200);
+        });
+      });
+      ws.onclose = () => setTimeout(connect, 1200);
+      return ws;
+    };
+    const ws = connect();
+    return () => ws.close();
+  }, []);
+
   const ownerBlock = useMemo(
-    () => `owner = {\n  "name": "Newton",\n  "role": "Full Stack Developer",\n  "focus": ["Realtime Systems", "AI Product Engineering", "Performance Architecture"],\n  "location": "Kenya",\n  "status": "ONLINE",\n  "summary": "Building durable software systems for the long horizon.",\n  "server_date": "${pulse.server_date}",\n  "server_time": "${pulse.server_time}",\n  "visitor_count": ${pulse.visitor_count},\n  "neural_activity": ${pulse.neural_activity},\n  "archive_sync_status": "${pulse.archive_sync_status}"\n}`,
+    () => `owner = {\n    "name": "Newton",\n    "role": "Full Stack Developer",\n    "focus": ["Realtime Systems", "AI Product Engineering", "Performance Architecture"],\n    "location": "Kenya",\n    "status": "ONLINE",\n    "summary": "Building durable software systems for the long horizon.",\n    "server_date": "${pulse.server_date}",\n    "server_time": "${pulse.server_time}",\n    "visitor_count": ${pulse.visitor_count},\n    "neural_activity": ${pulse.neural_activity},\n    "archive_sync_status": "${pulse.archive_sync_status}"\n}`,
     [pulse]
   );
 
@@ -152,13 +170,6 @@ export default function DigitalOSPage() {
       pushTerminal({ type: "out", text: terminalCatalog[cmd as keyof typeof terminalCatalog] });
       return;
     }
-    if (cmd.startsWith("find me ")) {
-      const q = cmd.replace(/^find me\s+/i, "").trim();
-      setQuery(q);
-      const hit = projects.filter((p) => `${p.name} ${p.desc} ${p.impact} ${p.tags.join(" ")}`.toLowerCase().includes(q.toLowerCase()));
-      pushTerminal({ type: "out", text: hit.length ? hit.map((h) => `match: ${h.name}`).join(" | ") : "no indexed result" });
-      return;
-    }
     if (cmd.startsWith("open ")) {
       const id = cmd.replace(/^open\s+/i, "").toLowerCase();
       const node = document.getElementById(id);
@@ -173,13 +184,24 @@ export default function DigitalOSPage() {
     pushTerminal({ type: "out", text: "unknown command. run help" });
   }
 
-  async function ask(queryText: string) {
-    if (!queryText.trim()) return;
-    pushTwin({ role: "user", text: queryText });
-    setChat("");
-    void trackAnalytics("ai_chat_usage", { q: queryText });
-    const res = await askTwin(queryText);
-    pushTwin({ role: "assistant", text: res.answer || "No response." });
+  async function submitClientMessage() {
+    const payload = {
+      name: clientForm.name.trim(),
+      email: clientForm.email.trim(),
+      company: clientForm.company.trim(),
+      message: clientForm.message.trim()
+    };
+
+    if (!payload.name || !payload.email || !payload.message) return;
+    const result = await createMessage(payload);
+    if (result?.status === "ok" && result.message) {
+      setMessages((prev) => {
+        if (prev.some((item) => item.id === result.message.id)) return prev;
+        return [...prev, result.message].slice(-200);
+      });
+      setClientForm((current) => ({ ...current, message: "" }));
+      void trackAnalytics("client_message", { email: payload.email });
+    }
   }
 
   function monitorColor(state: string) {
@@ -258,7 +280,6 @@ export default function DigitalOSPage() {
         className={moduleClass(theme)}
       >
         <h2 className="mb-3 text-lg">Projects Matrix</h2>
-        {query && <p className="mb-3 text-xs text-cyan">semantic query: {query}</p>}
         <div className="grid gap-3 md:grid-cols-2">
           {projects.map((project) => (
             <article key={project.id} className="rounded-xl border border-white/15 bg-black/25 p-4">
@@ -279,7 +300,7 @@ export default function DigitalOSPage() {
             <button className="rounded border border-white/20 px-2 py-1" onClick={() => setTab("performance")}>Performance Metrics</button>
             <button className="rounded border border-white/20 px-2 py-1" onClick={() => setTab("forensic")}>Forensic Cache</button>
           </div>
-          {tab === "design" && <p className="text-sm">Architecture: Next.js App Router UI, Zustand shared client state, FastAPI realtime engine, PostgreSQL telemetry, FAISS retrieval context.</p>}
+          {tab === "design" && <p className="text-sm">Architecture: Next.js App Router UI, Zustand shared client state, FastAPI realtime engine, PostgreSQL telemetry, WebSocket dual-channel streaming.</p>}
           {tab === "performance" && <p className="text-sm">Latency: 42ms avg WS push | Uptime: 99.96% target | Throughput: 2,400 event writes/day baseline.</p>}
           {tab === "forensic" && <p className="text-sm">Traces: pulse stream events, monitor snapshots, sync chronology from immutable ledger chain.</p>}
         </div>
@@ -306,34 +327,66 @@ export default function DigitalOSPage() {
             setCommand("");
           }}
         >
-          <input className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm" value={command} onChange={(e) => setCommand(e.target.value)} placeholder="help | ls | cd | open profile | find me security | clear" />
+          <input className=\"w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm\" value={command} onChange={(e) => setCommand(e.target.value)} placeholder=\"help | ls | cd | open profile | clear\" />
           <button className="rounded-lg border border-white/20 px-3 py-2">run</button>
         </form>
       </section>
 
       <section
-        id="ai"
+        id="messages"
         ref={(el) => {
           if (el) sectionRefs.current[4] = el;
         }}
         className={moduleClass(theme)}
       >
-        <h2 className="mb-3 text-lg">AI Digital Twin (RAG)</h2>
-        <div className="h-56 overflow-y-auto rounded-xl border border-white/20 bg-black/35 p-3 text-sm">
-          {twinMessages.map((msg, idx) => (
-            <p key={`${msg.role}-${idx}`} className={msg.role === "user" ? "text-cyan" : "text-slate-300"}>{msg.role}: {msg.text}</p>
-          ))}
+        <h2 className="mb-3 text-lg">Client Messaging Platform</h2>
+        <div className="grid gap-3 md:grid-cols-[1.2fr_1fr]">
+          <div className="h-64 overflow-y-auto rounded-xl border border-white/20 bg-black/35 p-3 text-sm">
+            {messages.length === 0 && <p className="text-slate-400">No client messages yet.</p>}
+            {messages.map((item) => (
+              <article key={item.id} className="mb-2 rounded-lg border border-white/15 bg-black/30 p-2">
+                <p className="font-semibold text-cyan">{item.name} <span className="text-xs text-slate-400">({item.email})</span></p>
+                {item.company && <p className="text-xs text-violet">{item.company}</p>}
+                <p className="mt-1 text-slate-200">{item.message}</p>
+                <p className="mt-1 text-xs text-slate-500">{new Date(item.created_at).toLocaleString()}</p>
+              </article>
+            ))}
+          </div>
+
+          <form
+            className="space-y-2 rounded-xl border border-white/20 bg-black/25 p-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void submitClientMessage();
+            }}
+          >
+            <input
+              className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm"
+              value={clientForm.name}
+              onChange={(e) => setClientForm((current) => ({ ...current, name: e.target.value }))}
+              placeholder="Client name"
+            />
+            <input
+              className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm"
+              value={clientForm.email}
+              onChange={(e) => setClientForm((current) => ({ ...current, email: e.target.value }))}
+              placeholder="Client email"
+            />
+            <input
+              className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm"
+              value={clientForm.company}
+              onChange={(e) => setClientForm((current) => ({ ...current, company: e.target.value }))}
+              placeholder="Company (optional)"
+            />
+            <textarea
+              className="h-24 w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm"
+              value={clientForm.message}
+              onChange={(e) => setClientForm((current) => ({ ...current, message: e.target.value }))}
+              placeholder="Message"
+            />
+            <button className="rounded-lg border border-white/20 px-3 py-2 text-sm">Send Message</button>
+          </form>
         </div>
-        <form
-          className="mt-3 flex gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void ask(chat);
-          }}
-        >
-          <input className="w-full rounded-lg border border-white/20 bg-black/20 px-3 py-2 text-sm" value={chat} onChange={(e) => setChat(e.target.value)} placeholder="Ask Newton's twin..." />
-          <button className="rounded-lg border border-white/20 px-3 py-2">ask</button>
-        </form>
       </section>
 
       <section
@@ -409,7 +462,7 @@ export default function DigitalOSPage() {
       >
         <h2 className="mb-3 text-lg">Analytics System</h2>
         <p className="text-sm">Tracked events total: {analyticsTotal}</p>
-        <p className="mt-2 text-sm">Includes section visits, terminal usage, project interactions, and AI chat usage.</p>
+        <p className="mt-2 text-sm">Includes section visits, terminal usage, project interactions, and client messages.</p>
       </section>
     </main>
   );

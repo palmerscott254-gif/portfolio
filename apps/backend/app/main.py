@@ -9,9 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import faiss
 import httpx
-import numpy as np
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -36,6 +34,7 @@ PROJECTS_PATH = DATA_DIR / "projects.seed.json"
 LEDGER_PATH = DATA_DIR / "work-ledger.jsonl"
 ARCHIVE_PATH = DATA_DIR / "archive-state.json"
 RAG_DIR = DATA_DIR / "rag"
+MESSAGES_PATH = DATA_DIR / "client-messages.jsonl"
 
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 engine: AsyncEngine | None = create_async_engine(DATABASE_URL, echo=False) if DATABASE_URL else None
@@ -54,8 +53,11 @@ class AnalyticsEvent(BaseModel):
     payload: dict[str, Any] = {}
 
 
-class AskPayload(BaseModel):
-    query: str
+class ClientMessagePayload(BaseModel):
+    name: str
+    email: str
+    company: str | None = None
+    message: str
 
 
 class PulseState:
@@ -67,51 +69,8 @@ class PulseState:
 
 pulse_state = PulseState()
 clients: set[WebSocket] = set()
+message_clients: set[WebSocket] = set()
 last_ledger_hash = "GENESIS"
-
-
-class RagIndex:
-    def __init__(self) -> None:
-        self.dim = 256
-        self.index = faiss.IndexFlatIP(self.dim)
-        self.doc_vectors: list[np.ndarray] = []
-        self.docs: list[dict[str, str]] = []
-
-    def _to_vector(self, text: str) -> np.ndarray:
-        vector = np.zeros(self.dim, dtype=np.float32)
-        for token in text.lower().split():
-            digest = int(hashlib.md5(token.encode("utf-8")).hexdigest(), 16)
-            vector[digest % self.dim] += 1.0
-        norm = np.linalg.norm(vector)
-        if norm > 0:
-            vector = vector / norm
-        return vector
-
-    def rebuild(self, docs: list[dict[str, str]]) -> None:
-        self.docs = docs
-        self.index.reset()
-        self.doc_vectors.clear()
-        if not docs:
-            return
-        vectors = [self._to_vector(d["text"]) for d in docs]
-        matrix = np.stack(vectors)
-        self.index.add(matrix)
-        self.doc_vectors = vectors
-
-    def query(self, text: str, limit: int = 3) -> list[dict[str, str]]:
-        if not self.docs:
-            return []
-        query_vector = self._to_vector(text).reshape(1, -1)
-        _, indices = self.index.search(query_vector, min(limit, len(self.docs)))
-        hits = []
-        for i in indices[0]:
-            if i < 0:
-                continue
-            hits.append(self.docs[int(i)])
-        return hits
-
-
-rag_index = RagIndex()
 
 
 def now_iso() -> str:
@@ -138,6 +97,12 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
         except Exception:
             continue
     return rows
+
+
+def append_jsonl(path: Path, row: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as file:
+        file.write(json.dumps(row) + "\n")
 
 
 def append_ledger(project_name: str, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -205,51 +170,6 @@ async def compute_monitor_status() -> dict[str, str]:
     return status
 
 
-def build_rag_docs() -> list[dict[str, str]]:
-    projects = read_json(PROJECTS_PATH, [])
-    docs: list[dict[str, str]] = [
-        {
-            "id": "projects.seed.json",
-            "text": " ".join(
-                f"{p.get('name')}. {p.get('desc')}. Impact: {p.get('impact')}. Tags: {', '.join(p.get('tags', []))}."
-                for p in projects
-            ),
-        }
-    ]
-
-    if RAG_DIR.exists():
-        for file in RAG_DIR.iterdir():
-            if file.suffix.lower() not in {".md", ".txt", ".json"}:
-                continue
-            docs.append({"id": file.name, "text": file.read_text(encoding="utf-8")})
-
-    return docs
-
-
-def answer_from_context(query: str, docs: list[dict[str, str]]) -> str:
-    fragments = []
-    for doc in docs:
-        chunks = [segment.strip() for segment in doc["text"].split("\n") if segment.strip()]
-        fragments.extend(chunks[:4])
-
-    if not fragments:
-        return "I do not have enough indexed context yet."
-
-    query_terms = [q for q in query.lower().split() if len(q) > 2]
-    ranked = sorted(
-        fragments,
-        key=lambda fragment: sum(1 for term in query_terms if term in fragment.lower()),
-        reverse=True,
-    )
-    selected = ranked[:3]
-    synthesis = " ".join(selected)
-    return (
-        "Newton: "
-        f"{synthesis} "
-        "I design resilient systems with measurable performance, reliability, and clear operational traces."
-    )
-
-
 async def broadcast_pulse() -> None:
     while True:
         pulse_state.neural_activity = max(40, min(99, pulse_state.neural_activity + random.randint(-5, 5)))
@@ -272,11 +192,21 @@ async def broadcast_pulse() -> None:
         await asyncio.sleep(1.0)
 
 
+async def broadcast_message(message: dict[str, Any]) -> None:
+    stale: list[WebSocket] = []
+    for client in message_clients:
+        try:
+            await client.send_json(message)
+        except Exception:
+            stale.append(client)
+    for client in stale:
+        message_clients.discard(client)
+
+
 @app.on_event("startup")
 async def on_startup() -> None:
     await db_init()
     load_ledger_state()
-    rag_index.rebuild(build_rag_docs())
     asyncio.create_task(broadcast_pulse())
 
 
@@ -284,6 +214,38 @@ async def on_startup() -> None:
 async def get_projects() -> dict[str, Any]:
     projects = read_json(PROJECTS_PATH, [])
     return {"projects": projects}
+
+
+@app.get("/api/messages")
+async def get_messages() -> dict[str, Any]:
+    rows = read_jsonl(MESSAGES_PATH)
+    return {"messages": rows[-200:]}
+
+
+@app.post("/api/messages")
+async def create_message(payload: ClientMessagePayload) -> dict[str, Any]:
+    clean_name = payload.name.strip()
+    clean_email = payload.email.strip().lower()
+    clean_company = (payload.company or "").strip()
+    clean_message = payload.message.strip()
+
+    if not clean_name or not clean_email or not clean_message:
+        return {"status": "error", "message": "name, email, and message are required"}
+
+    entry = {
+        "id": hashlib.sha1(f"{clean_email}:{now_iso()}:{clean_message}".encode("utf-8")).hexdigest()[:12],
+        "name": clean_name,
+        "email": clean_email,
+        "company": clean_company,
+        "message": clean_message,
+        "created_at": now_iso(),
+        "channel": "client-platform",
+    }
+
+    append_jsonl(MESSAGES_PATH, entry)
+    append_ledger("portfolio", "client_message", {"id": entry["id"], "email": clean_email})
+    await broadcast_message(entry)
+    return {"status": "ok", "message": entry}
 
 
 @app.get("/api/archive/state")
@@ -359,14 +321,6 @@ async def analytics_summary() -> dict[str, Any]:
     return {"total_events": max(db_total, ledger_events)}
 
 
-@app.post("/api/ai/ask")
-async def ai_ask(payload: AskPayload) -> dict[str, Any]:
-    hits = rag_index.query(payload.query, limit=3)
-    answer = answer_from_context(payload.query, hits)
-    append_ledger("portfolio", "ai_query", {"query": payload.query})
-    return {"answer": answer, "sources": [h["id"] for h in hits]}
-
-
 @app.websocket("/ws/pulse")
 async def pulse_socket(socket: WebSocket) -> None:
     await socket.accept()
@@ -378,3 +332,14 @@ async def pulse_socket(socket: WebSocket) -> None:
             await socket.receive_text()
     except WebSocketDisconnect:
         clients.discard(socket)
+
+
+@app.websocket("/ws/messages")
+async def messages_socket(socket: WebSocket) -> None:
+    await socket.accept()
+    message_clients.add(socket)
+    try:
+        while True:
+            await socket.receive_text()
+    except WebSocketDisconnect:
+        message_clients.discard(socket)

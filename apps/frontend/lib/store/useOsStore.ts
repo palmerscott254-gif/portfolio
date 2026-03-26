@@ -14,8 +14,6 @@ type Project = {
   tags: string[];
 };
 
-type TwinMessage = { role: "user" | "assistant"; text: string };
-
 type OsState = {
   pulse: Pulse;
   mode: Mode;
@@ -23,7 +21,6 @@ type OsState = {
   projects: Project[];
   terminalHistory: string[];
   terminalLines: TerminalLine[];
-  twinMessages: TwinMessage[];
   analyticsTotal: number;
   setPulse: (pulse: Pulse) => void;
   setMode: (mode: Mode) => void;
@@ -32,7 +29,6 @@ type OsState = {
   pushTerminal: (line: TerminalLine) => void;
   pushHistory: (cmd: string) => void;
   clearTerminal: () => void;
-  pushTwin: (msg: TwinMessage) => void;
   setAnalyticsTotal: (n: number) => void;
 };
 
@@ -51,7 +47,6 @@ export const useOsStore = create<OsState>((set) => ({
   projects: [],
   terminalHistory: [],
   terminalLines: [{ type: "out", text: "Digital OS boot complete. Type help." }],
-  twinMessages: [],
   analyticsTotal: 0,
   setPulse: (pulse) => set({ pulse }),
   setMode: (mode) => set({ mode }),
@@ -61,6 +56,5 @@ export const useOsStore = create<OsState>((set) => ({
   pushHistory: (cmd) =>
     set((s) => ({ terminalHistory: [...s.terminalHistory, cmd].slice(-200) })),
   clearTerminal: () => set({ terminalLines: [] }),
-  pushTwin: (msg) => set((s) => ({ twinMessages: [...s.twinMessages, msg] })),
   setAnalyticsTotal: (analyticsTotal) => set({ analyticsTotal })
 }));
