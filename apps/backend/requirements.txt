@@ -1,0 +1,10 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+websockets==15.0.1
+python-dotenv==1.0.1
+httpx==0.28.1
+sqlalchemy==2.0.40
+asyncpg==0.30.0
+psycopg[binary]==3.2.6
+numpy==2.2.4
+faiss-cpu==1.10.0
