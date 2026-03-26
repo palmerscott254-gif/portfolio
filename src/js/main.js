@@ -35,6 +35,7 @@ const projectPerf = document.getElementById("projectPerf");
 const projectForensic = document.getElementById("projectForensic");
 const archiveSummary = document.getElementById("archiveSummary");
 const archiveSyncBtn = document.getElementById("archiveSyncBtn");
+const resetLayoutBtn = document.getElementById("resetLayoutBtn");
 const ledgerHash = document.getElementById("ledgerHash");
 const pulseVisitors = document.getElementById("pulseVisitors");
 const pulseActivity = document.getElementById("pulseActivity");
@@ -55,7 +56,20 @@ function loadLayout() {
   try {
     const parsed = JSON.parse(localStorage.getItem("desktop.layout") || "{}");
     if (parsed && typeof parsed === "object") {
-      setState({ windows: parsed });
+      const sanitized = Object.entries(parsed).reduce((acc, [key, value]) => {
+        if (!value || typeof value !== "object") return acc;
+        const next = {
+          x: Number.isFinite(value.x) ? value.x : undefined,
+          y: Number.isFinite(value.y) ? value.y : undefined,
+          w: Number.isFinite(value.w) ? value.w : undefined,
+          h: Number.isFinite(value.h) ? value.h : undefined,
+          z: Number.isFinite(value.z) ? value.z : undefined,
+          minimized: Boolean(value.minimized)
+        };
+        acc[key] = next;
+        return acc;
+      }, {});
+      setState({ windows: sanitized });
     }
   } catch {
   }
@@ -123,6 +137,28 @@ function setWindowState(id, patch) {
   saveLayout();
 }
 
+function isCompactViewport() {
+  return window.matchMedia("(max-width: 1024px)").matches;
+}
+
+function clampWindowToViewport(windowEl, proposed) {
+  const maxW = Math.max(320, window.innerWidth - 24);
+  const maxH = Math.max(220, window.innerHeight - 140);
+  const w = Math.min(Math.max(320, proposed.w), maxW);
+  const h = Math.min(Math.max(220, proposed.h), maxH);
+  const x = Math.min(Math.max(8, proposed.x), Math.max(8, window.innerWidth - w - 8));
+  const y = Math.min(Math.max(44, proposed.y), Math.max(44, window.innerHeight - h - 90));
+
+  Object.assign(windowEl.style, {
+    left: `${x}px`,
+    top: `${y}px`,
+    width: `${w}px`,
+    height: `${h}px`
+  });
+
+  return { x, y, w, h };
+}
+
 function focusWindow(id) {
   const zCounter = store.zCounter + 1;
   setState({ zCounter });
@@ -133,6 +169,7 @@ function focusWindow(id) {
 
 function initWindowManager() {
   const windows = [...desktop.querySelectorAll(".os-window")];
+  const compact = isCompactViewport();
 
   windows.forEach((windowEl, index) => {
     const id = windowEl.dataset.window;
@@ -148,16 +185,26 @@ function initWindowManager() {
     const startH = saved.h ?? Number(windowEl.dataset.h || 340);
     const startZ = saved.z ?? (10 + index);
 
-    Object.assign(windowEl.style, {
-      left: `${startX}px`,
-      top: `${startY}px`,
-      width: `${startW}px`,
-      height: `${startH}px`,
-      zIndex: String(startZ),
-      display: saved.minimized ? "none" : "grid"
-    });
+    windowEl.style.zIndex = String(startZ);
+    windowEl.style.display = saved.minimized ? "none" : "grid";
 
-    setWindowState(id, { x: startX, y: startY, w: startW, h: startH, z: startZ, minimized: Boolean(saved.minimized) });
+    if (compact) {
+      Object.assign(windowEl.style, {
+        left: "",
+        top: "",
+        width: "",
+        height: ""
+      });
+      setWindowState(id, { z: startZ, minimized: Boolean(saved.minimized) });
+    } else {
+      const clamped = clampWindowToViewport(windowEl, {
+        x: startX,
+        y: startY,
+        w: startW,
+        h: startH
+      });
+      setWindowState(id, { ...clamped, z: startZ, minimized: Boolean(saved.minimized) });
+    }
 
     let drag = null;
     header.addEventListener("pointerdown", (event) => {
@@ -173,6 +220,7 @@ function initWindowManager() {
 
     header.addEventListener("pointermove", (event) => {
       if (!drag) return;
+      if (isCompactViewport()) return;
       const nx = Math.max(8, drag.x + (event.clientX - drag.sx));
       const ny = Math.max(44, drag.y + (event.clientY - drag.sy));
       windowEl.style.left = `${nx}px`;
@@ -181,6 +229,10 @@ function initWindowManager() {
 
     header.addEventListener("pointerup", () => {
       if (!drag) return;
+      if (isCompactViewport()) {
+        drag = null;
+        return;
+      }
       setWindowState(id, { x: windowEl.offsetLeft, y: windowEl.offsetTop });
       drag = null;
     });
@@ -199,6 +251,7 @@ function initWindowManager() {
 
     resizeHandle?.addEventListener("pointermove", (event) => {
       if (!resize) return;
+      if (isCompactViewport()) return;
       const nw = Math.max(320, resize.w + (event.clientX - resize.sx));
       const nh = Math.max(220, resize.h + (event.clientY - resize.sy));
       windowEl.style.width = `${nw}px`;
@@ -207,6 +260,10 @@ function initWindowManager() {
 
     resizeHandle?.addEventListener("pointerup", () => {
       if (!resize) return;
+      if (isCompactViewport()) {
+        resize = null;
+        return;
+      }
       setWindowState(id, { w: windowEl.offsetWidth, h: windowEl.offsetHeight });
       resize = null;
     });
@@ -227,6 +284,31 @@ function initWindowManager() {
   });
 }
 
+function reflowWindowsForViewport() {
+  const compact = isCompactViewport();
+  desktop.querySelectorAll(".os-window").forEach((windowEl) => {
+    const id = windowEl.dataset.window;
+    const saved = store.windows[id] || {};
+    if (compact) {
+      Object.assign(windowEl.style, {
+        left: "",
+        top: "",
+        width: "",
+        height: ""
+      });
+      return;
+    }
+
+    const clamped = clampWindowToViewport(windowEl, {
+      x: Number.isFinite(saved.x) ? saved.x : windowEl.offsetLeft,
+      y: Number.isFinite(saved.y) ? saved.y : windowEl.offsetTop,
+      w: Number.isFinite(saved.w) ? saved.w : windowEl.offsetWidth,
+      h: Number.isFinite(saved.h) ? saved.h : windowEl.offsetHeight
+    });
+    setWindowState(id, clamped);
+  });
+}
+
 function openWindow(id) {
   const node = desktop.querySelector(`.os-window[data-window='${id}']`);
   if (!node) return;
@@ -236,17 +318,51 @@ function openWindow(id) {
 }
 
 function setupLaunchers() {
+  function isPopoverOpen() {
+    if (typeof startMenu.matches === "function") {
+      try {
+        if (startMenu.matches(":popover-open")) return true;
+      } catch {
+      }
+    }
+    return startMenu.classList.contains("is-open");
+  }
+
+  function openStartMenu() {
+    if (typeof startMenu.showPopover === "function") {
+      startMenu.showPopover();
+      return;
+    }
+    startMenu.classList.add("is-open");
+  }
+
+  function closeStartMenu() {
+    if (typeof startMenu.hidePopover === "function") {
+      startMenu.hidePopover();
+      return;
+    }
+    startMenu.classList.remove("is-open");
+  }
+
   document.querySelectorAll("[data-open]").forEach((button) => {
     button.addEventListener("click", () => {
       const id = button.dataset.open;
       openWindow(id);
-      if (startMenu.matches(":popover-open")) startMenu.hidePopover();
+      if (isPopoverOpen()) closeStartMenu();
     });
   });
 
   startToggle.addEventListener("click", () => {
-    if (startMenu.matches(":popover-open")) startMenu.hidePopover();
-    else startMenu.showPopover();
+    if (isPopoverOpen()) closeStartMenu();
+    else openStartMenu();
+  });
+
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (!isPopoverOpen()) return;
+    if (startMenu.contains(target) || startToggle.contains(target)) return;
+    closeStartMenu();
   });
 }
 
@@ -527,6 +643,7 @@ async function init() {
   setupMode();
   setupLaunchers();
   initWindowManager();
+  window.addEventListener("resize", reflowWindowsForViewport);
   setupProjectTabs();
   setupTerminal();
   setupAssistant();
@@ -540,6 +657,12 @@ async function init() {
     loadAnalytics(),
     loadArchive()
   ]);
+
+  resetLayoutBtn?.addEventListener("click", () => {
+    localStorage.removeItem("desktop.layout");
+    localStorage.removeItem("terminal.history");
+    location.reload();
+  });
 
   await trackEvent("page_view", { title: document.title });
 }

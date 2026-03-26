@@ -3,6 +3,12 @@ export function initCommandPalette({ onRunAdvisor }) {
   const commandToggle = document.getElementById("commandToggle");
   const commandInput = document.getElementById("commandInput");
 
+  if (!palette || !commandToggle || !commandInput) {
+    return {
+      openPalette() {}
+    };
+  }
+
   function openPalette() {
     palette.showModal();
     setTimeout(() => commandInput.focus(), 20);
@@ -28,7 +34,7 @@ export function initCommandPalette({ onRunAdvisor }) {
       if (command === "projects") goTo("projects");
       if (command === "advisor") {
         goTo("advisor");
-        onRunAdvisor();
+        if (typeof onRunAdvisor === "function") onRunAdvisor();
       }
       if (command === "horizon") goTo("horizon");
       if (command === "assistant") goTo("assistant");
