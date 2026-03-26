@@ -32,12 +32,12 @@ export function renderProjectGrid({ projectGrid, projects, activeFilter, onOpenP
 
   visible.forEach((project) => {
     const card = document.createElement("article");
-    card.className = "project-card panel js-tilt";
+    card.className = "project-card panel-soft";
     card.innerHTML = `
       <img class="thumb" alt="${project.name} visual" loading="lazy" decoding="async" src="${imageForProject(project)}" />
       <h3>${project.name}</h3>
       <p>${project.desc}</p>
-      <div class="subtle" style="margin-top:.4rem;">Impact: ${project.impact || "Impact details pending."}</div>
+      <div class="muted" style="margin-top:.4rem;">Impact: ${project.impact || "Impact details pending."}</div>
       <div class="tag-row">${project.tags.map((tag) => `<span class="tag">${tag}</span>`).join("")}</div>
       <button type="button" class="btn btn-ghost project-open" style="margin-top:.65rem;">Open Deep Dive</button>
     `;
